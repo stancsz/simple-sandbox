@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { globalBatchExecutor } from "../../../batch/batch_orchestrator.js";
 import { TaskDefinition } from "../../../interfaces/daemon.js";
-import * as cronParser from 'cron-parser';
+import { CronExpressionParser } from 'cron-parser';
 
 export async function executeBatchRoutines(episodic: EpisodicMemory, company?: string) {
     // 1. Load Scheduler Config
@@ -34,7 +34,7 @@ export async function executeBatchRoutines(episodic: EpisodicMemory, company?: s
         if (t.trigger === 'cron' && t.schedule) {
             try {
                 // If it was supposed to run in the last hour, we consider it due for this batch
-                const interval = cronParser.parseExpression(t.schedule, { currentDate: new Date(now.getTime() - 60 * 60 * 1000) });
+                const interval = CronExpressionParser.parse(t.schedule, { currentDate: new Date(now.getTime() - 60 * 60 * 1000) });
                 const nextDate = interval.next().toDate();
                 if (nextDate.getTime() <= now.getTime()) {
                     return true;
