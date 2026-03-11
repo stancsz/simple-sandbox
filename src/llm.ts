@@ -120,8 +120,9 @@ export class LLM {
     // Only attempt batching if no streaming is requested and it's a "user" history length that suggests a strategic scan
     // For simplicity, we only batch requests with similar system prompts if batching is enabled
     if (batchEnabled && !onTyping && !sysConfig.yoloMode) {
-      return new Promise((resolve, reject) => {
-        const reqId = require('crypto').randomUUID();
+      return new Promise(async (resolve, reject) => {
+        const crypto = await import('crypto');
+        const reqId = crypto.randomUUID();
         LLM.generateQueue.push({ id: reqId, system, history, resolve, reject });
 
         if (LLM.generateQueue.length >= (sysConfig.batching?.maxBatchSize || 5)) {
