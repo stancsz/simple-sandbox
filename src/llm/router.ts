@@ -144,7 +144,7 @@ export class AdaptiveRouter extends LLM {
       if (!decision) {
           decision = await this.evaluateTaskComplexity(fullPrompt);
           if (decision && this.routerCache) {
-              await this.routerCache.set(cacheKey, 'router', decision);
+              await this.routerCache.set(cacheKey, 'router', decision as unknown as LLMResponse);
           }
       }
 

@@ -89,7 +89,7 @@ export function registerAdaptiveRoutingTools(server: McpServer) {
 
             return {
                 content: [{
-                    type: "text",
+                    type: "text" as const,
                     text: JSON.stringify(evaluation, null, 2)
                 }]
             };
@@ -99,7 +99,7 @@ export function registerAdaptiveRoutingTools(server: McpServer) {
             const fallback = complexityHeuristic(prompt);
             return {
                 content: [{
-                    type: "text",
+                    type: "text" as const,
                     text: JSON.stringify(fallback, null, 2)
                 }]
             };
