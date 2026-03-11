@@ -40,9 +40,12 @@ export function registerPolicyEngineTools(server: McpServer) {
             min_margin: z.number().min(0).max(1).default(0.2).describe("Minimum profit margin (0.0 - 1.0)."),
             risk_tolerance: z.enum(["low", "medium", "high"]).default("medium").describe("Risk tolerance level."),
             max_agents_per_swarm: z.number().min(1).default(5).describe("Maximum number of agents per swarm."),
-            company: z.string().optional().describe("The company/client identifier for namespacing.")
+            company: z.string().optional().describe("The company/client identifier for namespacing."),
+            max_contract_value: z.number().optional().describe("Maximum contract value for autonomous approval."),
+            allowed_risk_score: z.enum(["low", "medium", "high"]).optional().describe("Maximum allowed risk score for autonomous decisions."),
+            auto_approve_threshold: z.number().min(0).max(100).optional().describe("Threshold score for autonomous approval (0-100).")
         },
-        async ({ name, description, min_margin, risk_tolerance, max_agents_per_swarm, company }) => {
+        async ({ name, description, min_margin, risk_tolerance, max_agents_per_swarm, company, max_contract_value, allowed_risk_score, auto_approve_threshold }) => {
             const companyId = company || "default";
             const currentPolicy = await getLatestPolicy(companyId);
 
@@ -57,7 +60,16 @@ export function registerPolicyEngineTools(server: McpServer) {
                 parameters: {
                     min_margin,
                     risk_tolerance,
-                    max_agents_per_swarm
+                    max_agents_per_swarm,
+                    ...(max_contract_value !== undefined || allowed_risk_score !== undefined || auto_approve_threshold !== undefined
+                        ? {
+                              autonomous_decision_authority: {
+                                  max_contract_value: max_contract_value ?? 50000,
+                                  allowed_risk_score: allowed_risk_score ?? "medium",
+                                  auto_approve_threshold: auto_approve_threshold ?? 80
+                              }
+                          }
+                        : {})
                 },
                 isActive: true,
                 timestamp: Date.now(),

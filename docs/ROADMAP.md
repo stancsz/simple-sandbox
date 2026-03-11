@@ -241,6 +241,14 @@ The roadmap is structured around the four anatomical layers of the Digital Biosp
     - ✅ Implemented dynamic Helm chart for multi-region; validated via integration tests including regional outage simulation and penetration testing.
     - ✅ Validated failover controller logic, replication sidecar configuration and Helm template generation via `tests/integration/multi_region_validation.test.ts`.
 
+## Phase 29: Advanced Autonomous Decision Making
+*Mission*: Extend the agency's autonomy to handle complex business decisions that traditionally require human judgment, such as evaluating potential partnerships, simulating hiring decisions, or allocating R&D budget.
+*Status*: In Progress
+- [ ] **Partnership Evaluation Engine**: Evaluate potential partnerships, simulate outcomes, and log decisions to the Brain.
+- [ ] **Autonomous R&D Allocation**: Decide on budget allocation for experimental or growth projects based on Corporate Strategy.
+- [ ] **Simulated Hiring Workflow**: Run simulated scenarios for talent acquisition and evaluate the projected ROI of new hires.
+- [ ] **Decision Validation & Audit Trail**: Maintain an immutable ledger in the Episodic Memory of all autonomous decisions, constraints applied, and resulting actions.
+
 ## Phase 28: Operational Efficiency & Cost Optimization
 *Status: Completed*
 *Current Focus: Infrastructure optimization to reduce token spend and compute costs across the Digital Biosphere.*

@@ -14,6 +14,11 @@ export interface CorporatePolicy {
         min_margin: number;
         risk_tolerance: "low" | "medium" | "high";
         max_agents_per_swarm: number;
+        autonomous_decision_authority?: {
+            max_contract_value: number;
+            allowed_risk_score: "low" | "medium" | "high";
+            auto_approve_threshold: number;
+        };
         [key: string]: any;
     };
     isActive: boolean;

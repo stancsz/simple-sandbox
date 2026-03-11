@@ -13,7 +13,15 @@ This document outlines the high-level roadmap and current status of the Simple-C
 
 ## Upcoming Phases
 
-- **Phase 29: Autonomous Self-Improvement & Architectural Evolution**: In Progress 🚧
+- **Phase 29: Advanced Autonomous Decision Making**: In Progress 🚧
+  - **Mission**: Extend the agency's autonomy to handle complex business decisions that traditionally require human judgment, such as evaluating potential partnerships, simulating hiring decisions, or allocating R&D budget.
+  - **Key Objectives**:
+    - **a. Partnership Evaluation Engine**: Evaluate potential partnerships, simulate outcomes, and log decisions to the Brain.
+    - **b. Autonomous R&D Allocation**: Decide on budget allocation for experimental or growth projects based on Corporate Strategy.
+    - **c. Simulated Hiring Workflow**: Run simulated scenarios for talent acquisition and evaluate the projected ROI of new hires.
+    - **d. Decision Validation & Audit Trail**: Maintain an immutable ledger in the Episodic Memory of all autonomous decisions, constraints applied, and resulting actions.
+
+- **Phase 29: Autonomous Self-Improvement & Architectural Evolution**: Planned
   - **Mission**: Enable the agency to analyze its own architecture, identify technical debt/optimization opportunities, and autonomously propose/implement architectural improvements.
   - **Key Objectives**:
     - **a. Architectural Health Monitor**: Extend Health Monitor MCP to track architectural metrics (complexity, coupling, file size, dependency health).
