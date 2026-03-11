@@ -10,6 +10,10 @@
         <FinancialKPIsPanel :financialData="financialData" />
     </div>
 
+    <div class="grid-full" v-if="Object.keys(validMetrics).length > 0">
+        <OperationalEfficiencyPanel :metricsData="validMetrics" />
+    </div>
+
     <div class="grid-full">
         <SwarmFleetPanel :fleetData="fleetData" />
     </div>
@@ -62,9 +66,10 @@ import { Bar, Doughnut } from 'vue-chartjs'
 import SwarmFleetPanel from '../components/SwarmFleetPanel.vue'
 import FinancialKPIsPanel from '../components/FinancialKPIsPanel.vue'
 import SystemHealthPanel from '../components/SystemHealthPanel.vue'
+import OperationalEfficiencyPanel from '../components/OperationalEfficiencyPanel.vue'
 
 export default {
-    components: { Bar, Doughnut, SwarmFleetPanel, FinancialKPIsPanel, SystemHealthPanel },
+    components: { Bar, Doughnut, SwarmFleetPanel, FinancialKPIsPanel, SystemHealthPanel, OperationalEfficiencyPanel },
     data() {
         return {
             metrics: {},
