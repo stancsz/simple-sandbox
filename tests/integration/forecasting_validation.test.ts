@@ -56,7 +56,8 @@ describe("Phase 29: Advanced Planning & Forecasting Validation", () => {
 
   it("should initialize the forecasting MCP server", () => {
     expect(server).toBeDefined();
-    const tools = server.getServer()._registeredTools;
+    // Use the public API to verify tools if possible, or cast to access internal for tests
+    const tools = (server.getServer() as any)._registeredTools || (server.getServer() as any).registeredTools || (server.getServer() as any).tools;
     expect(tools).toHaveProperty("simulate_scenario");
     expect(tools).toHaveProperty("generate_forecast_report");
   });
