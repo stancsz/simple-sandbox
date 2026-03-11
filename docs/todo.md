@@ -330,3 +330,15 @@
 - [x] **Market Shock Absorption**: Enhance the Strategic Horizon Scanner to detect economic downturns or sudden opportunities (via market data APIs) and trigger pre-defined contingency plans (e.g., adjust pricing, pause non-critical swarms).
 - [x] **Multi-Region High Availability**: Extend the Kubernetes Helm chart to support multi-region deployment (e.g., AWS us-east-1, eu-west-1) with automated failover and geographic load balancing.
 - [x] **Validation**: Simulate a regional outage and verify automated recovery; run penetration testing via the security MCP; simulate full data loss to verify 1-hour DR recovery SLA. Validated multi-region failover on October 25, 2023.
+
+## Phase 28: Operational Efficiency & Cost Optimization (✅ Completed)
+- [x] **LLM Call Caching**: Implement file-based and Redis caching backends.
+- [x] **Batch Prompt Consolidation**: Bundle routine tasks with `BatchExecutor`.
+- [x] **Adaptive Model Routing**: Dynamically route LLM requests based on complexity.
+- [x] **Validation**: Validate efficiency improvements and cost reductions.
+
+## Phase 29: Advanced Planning & Forecasting (In Progress)
+- [ ] **Time-Series Forecasting**: Build models to predict resource consumption. (See PR #640)
+- [ ] **Capacity Planning**: Automate token budget and node scaling. (See PR #640)
+- [ ] **Demand Prediction**: Integrate `simple-statistics` for dynamic financial modeling. (See PR #640)
+- [ ] **Validation Metrics**: Demonstrate accurate forecasting based on historical simulation. (See PR #640)
