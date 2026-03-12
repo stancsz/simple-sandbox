@@ -34,6 +34,7 @@ import { registerAdaptiveRoutingTools } from "./tools/adaptive_routing.js";
 import { registerAutomatedBiddingTools } from "../commerce/automated_bidding.js";
 import { registerRevenueForecastingTools } from "../commerce/revenue_forecasting.js";
 import { registerServicePackagerTools } from "../commerce/service_packager.js";
+import { registerCapacityPlanningTools } from "./tools/capacity_planning.js";
 
 // Load secrets from .env.agent
 const envPath = join(process.cwd(), ".env.agent");
@@ -78,6 +79,7 @@ registerAdaptiveRoutingTools(server);
 registerAutomatedBiddingTools(server);
 registerRevenueForecastingTools(server);
 registerServicePackagerTools(server);
+registerCapacityPlanningTools(server);
 
 // Start Server
 async function main() {

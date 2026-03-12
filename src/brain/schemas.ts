@@ -14,6 +14,7 @@ export interface CorporatePolicy {
         min_margin: number;
         risk_tolerance: "low" | "medium" | "high";
         max_agents_per_swarm: number;
+        token_budget?: number;
         [key: string]: any;
     };
     isActive: boolean;
@@ -31,6 +32,7 @@ export interface BoardResolution {
         min_margin?: number;
         risk_tolerance?: "low" | "medium" | "high";
         max_agents_per_swarm?: number;
+        token_budget?: number;
     };
     rationale: string;
     vote_count: {
