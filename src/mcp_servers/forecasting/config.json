@@ -1,0 +1,5 @@
+{
+  "mape_threshold": 0.15,
+  "mae_threshold": 100,
+  "rmse_threshold": 150
+}
