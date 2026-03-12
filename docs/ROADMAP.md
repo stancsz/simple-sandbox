@@ -242,18 +242,19 @@ The roadmap is structured around the four anatomical layers of the Digital Biosp
     - ✅ Validated failover controller logic, replication sidecar configuration and Helm template generation via `tests/integration/multi_region_validation.test.ts`.
 
 ## Phase 29: Advanced Planning & Forecasting
-*Status: In Progress (PR #640)*
+*Status: Completed*
 *Current Focus: Predictive capabilities leveraging historical data for capacity and budget planning, enhancing our 4-Pillar Vision (Company Context, SOP-as-Code, Ghost Mode, and Recursive Optimization).*
-*Validation: ✅ Validated forecasting accuracy via historical simulation; integrated with Brain MCP for recursive optimization.*
+*Validation: ✅ Validated forecasting accuracy via historical simulation; integrated with Brain MCP for recursive optimization. ✅ Validated via forecasting integration tests and Brain integration (PR #640).*
 - [x] **Time-Series Forecasting**: Implement statistical and ML models to predict resource consumption, API costs, and infrastructure load based on historical metrics.
 - [x] **Capacity Planning**: Build an automated capacity planner that proposes dynamic node scaling and token budget adjustments to ensure continuous Ghost Mode operations.
 - [x] **Demand Prediction**: Integrate `simple-statistics` with the `business_ops` MCP for dynamic financial modeling and automated resource allocation, acting as a natural extension of Recursive Optimization.
 - [x] **Validation Metrics**: Demonstrate accurate forecasting (within acceptable error margins) and decision quality improvement via historical data simulation. Integrated error margins with Policy Engine. Validated via `scripts/simulate_forecasting_validation.ts`.
-- [ ] **Integration**: Integrate forecasting with the Brain MCP, Corporate Strategy, and Business Ops for holistic planning, fully embedding SOP-as-Code.
+- [x] **Integration**: Integrate forecasting with the Brain MCP, Corporate Strategy, and Business Ops for holistic planning, fully embedding SOP-as-Code.
 
 ## Phase 30: Autonomous Strategic Decision Making
-*Status: Planned*
+*Status: In Progress*
 *Current Focus: Extend the forecasting capabilities into an autonomous decision engine capable of executing strategic pivots based on predictive models.*
+- [x] ✅ Core decision tools implemented (`make_strategic_decision`, `execute_strategic_initiative`).
 
 ## Legacy Achievements
 See [Legacy Roadmap](ROADMAP_LEGACY.md) for completed milestones of the previous "Simple CLI" era.

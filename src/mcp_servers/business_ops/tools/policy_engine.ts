@@ -30,6 +30,70 @@ async function getLatestPolicy(company: string = "default"): Promise<CorporatePo
     return policies.length > 0 ? policies[0] : null;
 }
 
+// Import MCP directly to call other tools safely across server boundaries
+import { MCP } from "../../../mcp.js";
+
+export async function updateOperatingPolicyLogic(
+    policyUpdates: Record<string, any>,
+    justification: string,
+    mcp: MCP,
+    company?: string
+) {
+    const companyId = company || "default";
+    const currentPolicy = await getLatestPolicy(companyId);
+
+    const newVersion = currentPolicy ? currentPolicy.version + 1 : 1;
+    const previousId = currentPolicy ? currentPolicy.id : undefined;
+
+    // Default policy parameters if none exist
+    const defaultParams = {
+        min_margin: 0.2,
+        risk_tolerance: "medium" as const,
+        max_agents_per_swarm: 5
+    };
+
+    const currentParams = currentPolicy ? currentPolicy.parameters : defaultParams;
+
+    // Merge updates
+    const updatedParams = {
+        ...currentParams,
+        ...policyUpdates
+    };
+
+    const newPolicy: CorporatePolicy = {
+        id: randomUUID(),
+        version: newVersion,
+        name: currentPolicy ? currentPolicy.name : "Global Operating Policy",
+        description: justification,
+        parameters: updatedParams,
+        isActive: true,
+        timestamp: Date.now(),
+        author: "Strategic Decision Engine",
+        previous_version_id: previousId
+    };
+
+    await episodic.store(
+        `policy_update_v${newVersion}`,
+        `Update operating policy to version ${newVersion}: ${justification}`,
+        JSON.stringify(newPolicy),
+        [],
+        companyId,
+        undefined,
+        undefined,
+        undefined,
+        newPolicy.id,
+        0,
+        0,
+        "corporate_policy"
+    );
+
+    return {
+        success: true,
+        version: newVersion,
+        policy: newPolicy
+    };
+}
+
 export function registerPolicyEngineTools(server: McpServer) {
     server.tool(
         "update_operating_policy",

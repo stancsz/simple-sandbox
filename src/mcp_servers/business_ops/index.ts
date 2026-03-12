@@ -36,6 +36,7 @@ import { registerRevenueForecastingTools } from "../commerce/revenue_forecasting
 import { registerServicePackagerTools } from "../commerce/service_packager.js";
 import { registerCapacityPlanningTools } from "./tools/capacity_planning.js";
 import { registerForecastingIntegrationTools } from "./tools/forecasting_integration.js";
+import { registerExecutiveActionTools } from "./tools/executive_actions.js";
 
 // Load secrets from .env.agent
 const envPath = join(process.cwd(), ".env.agent");
@@ -82,6 +83,7 @@ registerRevenueForecastingTools(server);
 registerServicePackagerTools(server);
 registerCapacityPlanningTools(server);
 registerForecastingIntegrationTools(server);
+registerExecutiveActionTools(server);
 
 // Start Server
 async function main() {

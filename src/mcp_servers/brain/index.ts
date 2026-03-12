@@ -13,6 +13,7 @@ import { FrameworkIngestionEngine } from "../../framework_ingestion/ingest.js";
 import { createLLM } from "../../llm.js";
 import { readStrategy, proposeStrategicPivot } from "./tools/strategy.js";
 import { scanStrategicHorizon } from "./tools/scan_strategic_horizon.js";
+import { registerStrategicDecisionTools } from "./tools/strategic_decisions.js";
 import { conveneBoardMeeting } from "./tools/convene_board_meeting.js";
 import { getGrowthTargets } from "./tools/strategic_growth.js";
 import { monitorMarketSignals, evaluateEconomicRisk, triggerContingencyPlan } from "./tools/market_shock.js";
@@ -41,6 +42,9 @@ export class BrainServer {
     this.sopsDir = process.env.JULES_AGENT_DIR
         ? join(process.env.JULES_AGENT_DIR, "sops")
         : join(process.cwd(), ".agent", "sops");
+
+    // Register strategic decision tools
+    registerStrategicDecisionTools(this.server, this.episodic);
 
     // Auto-discover frameworks on startup
     this.frameworkEngine.scanForFrameworks().then(discovered => {
