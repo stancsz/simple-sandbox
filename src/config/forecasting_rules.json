@@ -1,0 +1,1 @@
+{"api_calls_per_day": {"base": 100, "resource": "swarm_agent", "ratio": 0.01}, "active_swarms": {"base": 1, "resource": "token_budget", "ratio": 1000000}}

@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { simulateScenario, generateForecastReport } from "./forecasting_engine.js";
-import { record_metric, forecast_metric } from "./models.js";
+import { record_metric, forecast_metric, list_metric_series, get_metric_points } from "./models.js";
 import { registerValidationTools } from "./validation.js";
 import { evaluate_forecast_accuracy } from "../validation_metrics/tools.js";
 import { getDb } from "./models.js";
@@ -33,6 +33,49 @@ export function registerTools(server: McpServer) {
       } catch (error: any) {
         return {
           content: [{ type: "text", text: `Error recording metric: ${error.message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "list_metric_series",
+    "Lists all available metric names that have been recorded for a company.",
+    {
+      company: z.string().describe("The company/client identifier for context.")
+    },
+    async ({ company }) => {
+      try {
+        const metrics = list_metric_series(company);
+        return {
+          content: [{ type: "text", text: JSON.stringify(metrics, null, 2) }],
+        };
+      } catch (error: any) {
+        return {
+          content: [{ type: "text", text: `Error listing metric series: ${error.message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_metric_points",
+    "Retrieves the raw historical time-series data points for a specific metric.",
+    {
+      metric_name: z.string().describe("The name of the metric."),
+      company: z.string().describe("The company/client identifier for context.")
+    },
+    async ({ metric_name, company }) => {
+      try {
+        const points = get_metric_points(metric_name, company);
+        return {
+          content: [{ type: "text", text: JSON.stringify(points, null, 2) }],
+        };
+      } catch (error: any) {
+        return {
+          content: [{ type: "text", text: `Error retrieving metric points: ${error.message}` }],
           isError: true,
         };
       }

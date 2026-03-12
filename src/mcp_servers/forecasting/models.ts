@@ -60,6 +60,28 @@ export function record_metric(metric_name: string, value: number, timestamp: str
   return result.changes > 0;
 }
 
+export function list_metric_series(company: string): string[] {
+  const database = getDb();
+  const stmt = database.prepare(`
+    SELECT DISTINCT metric_name
+    FROM metrics
+    WHERE company = ?
+  `);
+  const rows = stmt.all(company) as { metric_name: string }[];
+  return rows.map(r => r.metric_name);
+}
+
+export function get_metric_points(metric_name: string, company: string): { timestamp: string, value: number }[] {
+  const database = getDb();
+  const stmt = database.prepare(`
+    SELECT timestamp, value
+    FROM metrics
+    WHERE metric_name = ? AND company = ?
+    ORDER BY timestamp ASC
+  `);
+  return stmt.all(metric_name, company) as { timestamp: string, value: number }[];
+}
+
 export function forecast_metric(metric_name: string, horizon_days: number, company: string): ForecastResult {
   const database = getDb();
 

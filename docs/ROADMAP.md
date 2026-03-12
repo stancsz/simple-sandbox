@@ -247,7 +247,8 @@ The roadmap is structured around the four anatomical layers of the Digital Biosp
 *Validation: ✅ Validated forecasting accuracy via historical simulation; integrated with Brain MCP for recursive optimization.*
 - [x] **Time-Series Forecasting**: Implement statistical and ML models to predict resource consumption, API costs, and infrastructure load based on historical metrics.
 - [x] **Capacity Planning**: Build an automated capacity planner that proposes dynamic node scaling and token budget adjustments to ensure continuous Ghost Mode operations.
-- [ ] **Demand Prediction**: Integrate `simple-statistics` with the `business_ops` MCP for dynamic financial modeling and automated resource allocation, acting as a natural extension of Recursive Optimization.
+- [x] **Demand Prediction**: Integrate `simple-statistics` with the `business_ops` MCP for dynamic financial modeling and automated resource allocation, acting as a natural extension of Recursive Optimization.
+    - ✅ Implemented `forecast_resource_demand` tool in Business Ops MCP, validated via `demand_prediction_validation.test.ts`.
 - [x] **Validation Metrics**: Demonstrate accurate forecasting (within acceptable error margins) and decision quality improvement via historical data simulation.
 - [ ] **Integration**: Integrate forecasting with the Brain MCP, Corporate Strategy, and Business Ops for holistic planning, fully embedding SOP-as-Code.
 
