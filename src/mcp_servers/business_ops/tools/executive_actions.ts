@@ -2,7 +2,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { createLLM } from "../../../llm.js";
 import { EpisodicMemory } from "../../../brain/episodic.js";
-import { generateStrategicInitiativesLogic } from "./strategic_execution.js";
 import { updateOperatingPolicyLogic } from "./policy_engine.js";
 
 // Import MCP directly to call other tools safely across server boundaries
@@ -80,12 +79,31 @@ Return ONLY a valid JSON object matching this schema:
         executionResults.policy_update_error = e.message;
     }
 
-    // 3. Generate Strategic Initiatives (which creates Linear issues)
+    // 3. Generate Strategic Initiatives (which creates Linear issues) via Brain MCP
     try {
-        const initiativesResult = await generateStrategicInitiativesLogic(mcp, company);
+        const tools = await mcp.getTools();
+        const generateTool = tools.find(t => t.name === "generate_strategic_initiatives");
+        if (!generateTool) {
+            throw new Error("generate_strategic_initiatives tool not found in MCP registry.");
+        }
+
+        const result = await generateTool.execute({ company });
+
+        let initiativesResult;
+        if (result && (result as any).content && (result as any).content.length > 0) {
+            const contentText = (result as any).content[0].text;
+            try {
+                initiativesResult = JSON.parse(contentText);
+            } catch {
+                initiativesResult = contentText;
+            }
+        } else {
+            initiativesResult = result;
+        }
+
         executionResults.initiatives_result = initiativesResult;
     } catch (e: any) {
-        console.error("Failed to generate strategic initiatives:", e);
+        console.error("Failed to generate strategic initiatives via MCP:", e);
         executionResults.initiatives_error = e.message;
     }
 
