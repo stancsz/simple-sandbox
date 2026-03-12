@@ -38,3 +38,20 @@ Phase 29 introduces a dedicated `forecasting` MCP server designed to ingest hist
 ### Integration with the 4 Pillars
 - **Brain Integration**: The `compile_to_symbolic` tool allows the HR Loop or Supervisor to permanently "bake" highly successful patterns into zero-token graphs.
 - **Adaptive Router**: The `AdaptiveRouter` intercepts `generate` calls. If a compiled `TaskGraph` matches the intent, it executes deterministically, logging an `llm_requests_avoided` metric and reducing token costs by >40% for routine operations.
+
+## 19. Corporate Consciousness & Strategic Decision Engine (Phase 30)
+Phase 30 introduces an autonomous strategic decision loop, elevating the system from merely forecasting future states to automatically adjusting corporate strategy, operational policies, and Swarm initiatives.
+
+### Core Components
+1. **Strategic Decision Engine (`make_strategic_decision`)**:
+   - Ingests predictive data from the `forecasting` MCP alongside the current `CorporateStrategy` (stored in `EpisodicMemory`).
+   - Uses the LLM (acting as CEO) to evaluate whether a strategic pivot is required (e.g., expanding cloud capacity due to a predicted CPU shortage).
+   - Generates a "confidence score". If the score exceeds `0.80`, the engine automatically modifies the corporate strategy baseline.
+
+2. **Executive Execution (`execute_strategic_initiative`)**:
+   - Translates high-level strategic pivots into specific, actionable parameters.
+   - Automatically calculates updates for the Operating Policy (e.g., altering `base_pricing_multiplier` or `max_fleet_size`).
+   - Connects to the Linear API to generate prioritized trackable issues for the Swarm Fleet or Human Supervisors.
+
+### Integration with the 4 Pillars
+- **Recursive Optimization**: By combining Time-Series Forecasting (Phase 29) with the Strategic Decision Engine (Phase 30), the agent continuously aligns its resource allocation, pricing models, and operational footprint with predicted market realties, reducing latency in C-suite decision-making to near-zero.
