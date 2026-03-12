@@ -2,10 +2,13 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb, forecast_metric } from "./models.js";
 import { EpisodicMemory } from "../../brain/episodic.js";
-import { dirname } from "path";
+import { dirname, join } from "path";
+import { readFileSync } from "fs";
 import * as ss from 'simple-statistics';
 
 const baseDir = process.env.JULES_AGENT_DIR ? dirname(process.env.JULES_AGENT_DIR) : process.cwd();
+const configPath = join(process.cwd(), "src", "mcp_servers", "forecasting", "config.json");
+const config = JSON.parse(readFileSync(configPath, 'utf8'));
 const episodic = new EpisodicMemory(baseDir);
 
 export function evaluate_forecast_accuracy_legacy(metric_name: string, historical_days: number, horizon_days: number, company: string): any {
@@ -42,6 +45,7 @@ export function evaluate_forecast_accuracy_legacy(metric_name: string, historica
     const predictor = ss.linearRegressionLine(regressionLine);
 
     let absoluteErrors = [];
+    let squaredErrors = [];
     let absolutePercentageErrors = [];
 
     for (let i = 0; i < actualData.length; i++) {
@@ -52,6 +56,7 @@ export function evaluate_forecast_accuracy_legacy(metric_name: string, historica
 
         const error = Math.abs(actualValue - predictedValue);
         absoluteErrors.push(error);
+        squaredErrors.push(error * error);
 
         if (actualValue !== 0) {
             absolutePercentageErrors.push(error / Math.abs(actualValue));
@@ -59,7 +64,32 @@ export function evaluate_forecast_accuracy_legacy(metric_name: string, historica
     }
 
     const mae = ss.mean(absoluteErrors);
+    const rmse = Math.sqrt(ss.mean(squaredErrors));
     const mape = absolutePercentageErrors.length > 0 ? ss.mean(absolutePercentageErrors) : 0;
+
+    if (mape > config.mape_threshold) {
+        const alertId = `forecasting_alert_${Date.now()}`;
+        // Store an alert for the Policy Engine
+        episodic.store(
+            alertId,
+            `Forecasting accuracy degraded for metric ${metric_name}`,
+            JSON.stringify({
+                metric_name,
+                company,
+                mape: Number(mape.toFixed(4)),
+                threshold: config.mape_threshold,
+                message: `MAPE ${Number(mape.toFixed(4))} exceeds threshold ${config.mape_threshold}`
+            }),
+            ["forecasting", "policy_engine", "alert"],
+            company,
+            undefined,
+            false,
+            undefined,
+            undefined,
+            0, 0,
+            "forecasting_alert"
+        ).catch(err => console.error("Failed to store forecasting alert:", err));
+    }
 
     return {
         metric_name,
@@ -70,6 +100,7 @@ export function evaluate_forecast_accuracy_legacy(metric_name: string, historica
         },
         metrics: {
             mae: Number(mae.toFixed(4)),
+            rmse: Number(rmse.toFixed(4)),
             mape: Number(mape.toFixed(4))
         }
     };
@@ -129,6 +160,8 @@ export async function simulate_historical_decisions(metric_name: string, histori
         overprovisioning_reduction: overprovisioning_naive - overprovisioning_forecast
     };
 
+    const improvement_score = quality_improvement.underprovisioning_reduction + quality_improvement.overprovisioning_reduction;
+
     const simulationResult = {
         metric_name,
         company,
@@ -137,7 +170,8 @@ export async function simulate_historical_decisions(metric_name: string, histori
             forecast_allocation: maxPredictedDemand,
             optimal_allocation: maxActualDemand
         },
-        quality_improvement
+        quality_improvement,
+        improvement_score
     };
 
     // Store in Brain Episodic Memory
@@ -162,7 +196,7 @@ export async function simulate_historical_decisions(metric_name: string, histori
 export function registerValidationTools(server: McpServer) {
     server.tool(
         "evaluate_forecast_accuracy",
-        "Computes error metrics (MAE, MAPE) by comparing forecasted values with actual recorded metrics using a historical holdout set.",
+        "Computes error metrics (MAE, RMSE, MAPE) by comparing forecasted values with actual recorded metrics using a historical holdout set.",
         {
             metric_name: z.string().describe("The name of the metric to evaluate."),
             historical_days: z.number().min(2).describe("Number of historical data points to use for training the model."),

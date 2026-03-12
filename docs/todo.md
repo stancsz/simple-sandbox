@@ -339,7 +339,7 @@
 
 ## Phase 29: Advanced Planning & Forecasting (In Progress)
 - [x] Time-Series Forecasting: Implement MCP server with `record_metric` and `forecast_metric` using `simple-statistics` and `better-sqlite3`. Integrated with `business_ops` for `forecast_resource_demand`.
-- [ ] **Time-Series Forecasting**: Build models to predict resource consumption. (See PR #640)
+- [x] **Time-Series Forecasting**: Build models to predict resource consumption. (See PR #640)
 - [x] **Capacity Planning**: Automate token budget and node scaling. (See PR #640)
-- [ ] **Demand Prediction**: Integrate `simple-statistics` for dynamic financial modeling. (See PR #640)
-- [ ] **Validation Metrics**: Demonstrate accurate forecasting based on historical simulation. (See PR #640)
+- [x] **Demand Prediction**: Integrate `simple-statistics` for dynamic financial modeling. (See PR #640)
+- [x] **Validation Metrics**: Demonstrate accurate forecasting based on historical simulation. Implemented MAE, RMSE, MAPE metrics and decision quality simulation. Validated via `tests/integration/forecasting_validation.test.ts` (MAPE < 15%) on Date: [Insert current date].
