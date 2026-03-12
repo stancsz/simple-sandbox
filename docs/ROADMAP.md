@@ -252,9 +252,10 @@ The roadmap is structured around the four anatomical layers of the Digital Biosp
 - [x] **Integration**: Integrate forecasting with the Brain MCP, Corporate Strategy, and Business Ops for holistic planning, fully embedding SOP-as-Code.
 
 ## Phase 30: Autonomous Strategic Decision Making
-*Status: In Progress*
-*Current Focus: Extend the forecasting capabilities into an autonomous decision engine capable of executing strategic pivots based on predictive models.*
+*Status: Complete*
+*Current Focus: Extending forecasting capabilities into an autonomous decision engine capable of executing strategic pivots based on predictive models.*
 - [x] ✅ Core decision tools implemented (`make_strategic_decision`, `execute_strategic_initiative`).
+- [x] ✅ Comprehensive validation suite added (`phase30_strategic_decision_validation.test.ts`) covering capacity shortage, market opportunity, and conflicting forecast scenarios.
 
 ## Legacy Achievements
 See [Legacy Roadmap](ROADMAP_LEGACY.md) for completed milestones of the previous "Simple CLI" era.
