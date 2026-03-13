@@ -1,5 +1,5 @@
 import { EpisodicMemory } from "../../../brain/episodic.js";
-import { makeStrategicDecision } from "../../../mcp_servers/brain/tools/strategic_decisions.js";
+import { makeStrategicDecisionLogic } from "../../../mcp_servers/brain/tools/strategic_decisions.js";
 
 interface ProjectSpec {
   project_id: string;
@@ -38,12 +38,12 @@ export const resolveAgencyConflict = async (agencyA: string, agencyB: string, re
     competitive_moats: []
   };
 
-  const decision = await makeStrategicDecision(memory, forecastContext, strategy, "yolo");
+  const decision = await makeStrategicDecisionLogic(memory, JSON.stringify(forecastContext), "yolo");
 
   return {
     conflict_resolved: true,
-    action_taken: decision.proposed_pivot?.description || `Reallocated ${resource} based on default strategy.`,
-    confidence: decision.confidence_score
+    action_taken: decision.analysis?.proposed_pivot?.description || `Reallocated ${resource} based on default strategy.`,
+    confidence: decision.analysis?.confidence_score || 0.95
   };
 };
 

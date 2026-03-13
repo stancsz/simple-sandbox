@@ -101,10 +101,10 @@ export const crossAgencyPatternRecognition = async (
     for (const namespace of agencyNamespaces) {
       const results = await memory.recall(topic, 5, namespace);
 
-      const insights = results.map(r => ({
+      const insights = results.map((r: any) => ({
         agency: namespace,
         insight: r.solution || r.agentResponse || "Pattern logged",
-        taskId: r.taskId || r.query
+        taskId: r.taskId || r.query || "unknown_task"
       }));
       aggregatedPatterns.push(...insights);
     }

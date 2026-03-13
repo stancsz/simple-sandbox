@@ -5,9 +5,11 @@ import { crossAgencyPatternRecognition } from "../../src/mcp_servers/brain/tools
 
 // Mock Strategic Decision and Memory
 vi.mock("../../src/mcp_servers/brain/tools/strategic_decisions.js", () => ({
-  makeStrategicDecision: vi.fn().mockResolvedValue({
-    confidence_score: 0.95,
-    proposed_pivot: { description: "Reallocate 100 unused tokens from DevOps Agency to Backend Agency." }
+  makeStrategicDecisionLogic: vi.fn().mockResolvedValue({
+    analysis: {
+      confidence_score: 0.95,
+      proposed_pivot: { description: "Reallocate 100 unused tokens from DevOps Agency to Backend Agency." }
+    }
   })
 }));
 
