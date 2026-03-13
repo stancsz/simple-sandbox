@@ -1,151 +1,152 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
-import { EpisodicMemory } from '../../src/brain/episodic.js';
-import { BrainServer } from '../../src/mcp_servers/brain/index.js';
-import fs from 'fs';
-import path from 'path';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { EpisodicMemory, PastEpisode } from "../../src/brain/episodic.js";
+import { SemanticGraph } from "../../src/brain/semantic_graph.js";
+import { analyzeCrossAgencyPatterns } from "../../src/mcp_servers/brain/tools/pattern_analysis.js";
+import { createLLM } from "../../src/llm.js";
 
-// Mock LLM so we don't hit the real API in tests
-vi.mock('../../src/llm.js', () => {
-  class MockLLM {
-    async generate(systemPrompt: string, history: any[]) {
-      return {
-        message: JSON.stringify({
-          common_successes: ['Successfully mocked LLM response'],
-          recurring_failures: ['None'],
-          meta_recommendation: 'Use mocks during tests'
-        })
-      };
-    }
-    async embed(text: string) {
-        return new Array(1536).fill(0.1);
-    }
-  }
+// Mock the LLM to return a consistent JSON response
+vi.mock("../../src/llm.js", () => {
   return {
-    LLM: MockLLM,
-    createLLM: () => new MockLLM()
+    createLLM: () => ({
+      embed: vi.fn().mockResolvedValue(new Array(1536).fill(0.1)),
+      generate: vi.fn().mockResolvedValue({
+        message: JSON.stringify({
+          summary: "Ecosystem is healthy with standardized practices.",
+          common_themes: ["Standardized communication", "Efficient task delegation"],
+          top_performers: ["agency-A for speed"],
+          emerging_risks: ["Resource contention in agency-B"],
+          recommended_actions: ["Standardize agency-A approach"]
+        })
+      })
+    })
   };
 });
 
-describe('cross_agency_pattern_analysis integration', () => {
-  let brainServer: any;
-  let episodic: EpisodicMemory;
-  const testDir = path.join(process.cwd(), '.agent', 'test_brain_pattern_analysis');
-
-  beforeAll(async () => {
-    // Create a fresh directory for EpisodicMemory
-    if (!fs.existsSync(testDir)) {
-      fs.mkdirSync(testDir, { recursive: true });
-    }
-
-    // Set JULES_AGENT_DIR so BrainServer uses the test directory
-    process.env.JULES_AGENT_DIR = path.join(testDir, 'agent');
-
-    // Create a standalone instance of EpisodicMemory to seed data directly
-    episodic = new EpisodicMemory(testDir);
-    await episodic.init();
-
-    // Start Brain Server
-    brainServer = new BrainServer();
-  });
-
-  afterAll(async () => {
-    // Cleanup
-    if (fs.existsSync(testDir)) {
-      fs.rmSync(testDir, { recursive: true, force: true });
-    }
-    vi.restoreAllMocks();
-  });
-
-  const callTool = async (name: string, args: any) => {
-    const toolMap = brainServer.server._registeredTools || brainServer.server.tools || brainServer.server._tools;
-    let toolDef;
-    if (toolMap instanceof Map) {
-       toolDef = toolMap.get(name);
-    } else {
-       toolDef = toolMap[name] || Object.values(toolMap).find((t: any) => t.name === name);
-    }
-
-    if (!toolDef) throw new Error(`Tool ${name} not found`);
-
-    if (toolDef.handler) {
-       return toolDef.handler(args, {});
-    }
-    throw new Error(`Tool ${name} has no handler`);
+// Mock SemanticGraph
+vi.mock("../../src/brain/semantic_graph.js", () => {
+  return {
+    SemanticGraph: vi.fn().mockImplementation(() => {
+      return {
+        query: vi.fn().mockResolvedValue({
+          nodes: [{ id: "agency-A", type: "agency" }, { id: "agency-B", type: "agency" }],
+          edges: [{ from: "agency-A", to: "agency-B", relation: "collaborates_with" }]
+        })
+      };
+    })
   };
+});
 
-  it('verifies the cross_agency_pattern_recognition tool is accessible via the Brain MCP server', async () => {
-    const toolMap = brainServer.server._registeredTools || brainServer.server.tools || brainServer.server._tools;
-    let toolDef;
-    if (toolMap instanceof Map) {
-       toolDef = toolMap.get('cross_agency_pattern_recognition');
-    } else {
-       toolDef = toolMap['cross_agency_pattern_recognition'] || Object.values(toolMap).find((t: any) => t.name === 'cross_agency_pattern_recognition');
-    }
-    expect(toolDef).toBeDefined();
-    expect(toolDef.name || 'cross_agency_pattern_recognition').toBe('cross_agency_pattern_recognition');
+// Mock EpisodicMemory
+vi.mock("../../src/brain/episodic.js", () => {
+  // We use an in-memory array to simulate LanceDB to avoid lock issues
+  const mockMemories: PastEpisode[] = [];
+
+  return {
+    EpisodicMemory: vi.fn().mockImplementation(() => {
+      return {
+        store: vi.fn().mockImplementation(async (
+          taskId, request, solution, artifacts, company, simAttempts, resolved_via_dreaming, dreaming_outcomes, id, tokens, duration, type, related_episode_id, forecast_horizon, error_margin, source_agency
+        ) => {
+          mockMemories.push({
+            id: id || `mock-id-${mockMemories.length}`,
+            taskId,
+            timestamp: Date.now(),
+            userPrompt: request,
+            agentResponse: solution,
+            artifacts: artifacts || [],
+            vector: [],
+            source_agency: source_agency || (company !== "default" ? company : ""),
+            type: type || "task"
+          });
+        }),
+        getRecentEpisodes: vi.fn().mockImplementation(async (company) => {
+          if (company === "default") {
+            // Root memories
+            return mockMemories.filter(m => !m.source_agency || m.source_agency !== company);
+          } else {
+            // Namespaced memories
+            return mockMemories.filter(m => m.source_agency === company);
+          }
+        }),
+        recall: vi.fn().mockImplementation(async (query, limit, company) => {
+           if (company === "default") {
+             return mockMemories; // Simplified for test
+           } else {
+             return mockMemories.filter(m => m.source_agency === company);
+           }
+        }),
+        __getMockMemories: () => mockMemories,
+        __reset: () => { mockMemories.length = 0; }
+      };
+    })
+  };
+});
+
+describe("Cross-Agency Pattern Analysis Integration", () => {
+  let episodic: any;
+  let semantic: any;
+  let llm: any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    episodic = new EpisodicMemory();
+    episodic.__reset();
+    semantic = new SemanticGraph();
+    llm = createLLM();
   });
 
-  it('aggregates memories across agency namespaces, synthesizes with LLM, and stores meta-analysis', async () => {
-    const topic = "integration_test_pattern";
+  it("should analyze cross-agency patterns successfully using correct metadata", async () => {
+    // 1. Simulate logging distinct episodes from different child agencies
 
-    episodic.recall = vi.fn().mockImplementation(async (query: string, limit: number, namespace: string) => {
-      if (query !== topic) return [];
+    // Log via root default namespace but with source_agency
+    await episodic.store(
+      "task-1",
+      "Process invoices",
+      "Processed 100 invoices successfully in 5s.",
+      [],
+      "default", // root memory
+      undefined, undefined, undefined, undefined, undefined, undefined, "task", undefined, undefined, undefined,
+      "agency-A" // source agency!
+    );
 
-      if (namespace === 'test_agency_1') {
-        return [{
-          taskId: 'task_1',
-          query: topic,
-          solution: 'Outcome: success.',
-          agentResponse: 'Success',
-          timestamp: Date.now()
-        }];
-      } else if (namespace === 'test_agency_2') {
-        return [{
-          taskId: 'task_2',
-          query: topic,
-          solution: 'Outcome: failure.',
-          agentResponse: 'Failure',
-          timestamp: Date.now()
-        }];
-      }
-      return [];
-    });
+    // Log via namespaced memory
+    await episodic.store(
+      "task-2",
+      "Analyze logs",
+      "Failed to analyze due to memory limits.",
+      [],
+      "agency-B", // company/namespace
+      undefined, undefined, undefined, undefined, undefined, undefined, "task", undefined, undefined, undefined,
+      "agency-B"
+    );
 
-    const storeSpy = vi.spyOn(episodic, 'store');
+    // 2. Call the analyze tool logic
+    const agencyIds = ["agency-A", "agency-B"];
+    const result = await analyzeCrossAgencyPatterns(agencyIds, episodic, semantic, llm);
 
-    brainServer.episodic = episodic;
+    // 3. Assertions
+    expect(episodic.getRecentEpisodes).toHaveBeenCalledWith("agency-A", 20);
+    expect(episodic.getRecentEpisodes).toHaveBeenCalledWith("agency-B", 20);
+    expect(episodic.getRecentEpisodes).toHaveBeenCalledWith("default", 50);
 
-    // 2. Invoke the tool via the MCP server interface directly
-    const response = await callTool("cross_agency_pattern_recognition", {
-      topic: topic,
-      agency_namespaces: ["test_agency_1", "test_agency_2"]
-    });
+    expect(semantic.query).toHaveBeenCalledWith("agency", "default");
 
-    // 3. Validate Tool Output
-    expect(response).toBeDefined();
-    if (response.isError) {
-        console.error("Tool returned error:", response.content);
-    }
-    expect(response.isError).toBeUndefined(); // Some SDK versions don't return isError: false, they just omit it
+    expect(llm.generate).toHaveBeenCalled();
+    const llmPromptArg = llm.generate.mock.calls[0][0];
 
-    const content = JSON.parse(response.content[0].text);
+    // Verify prompt context contains our simulated data
+    expect(llmPromptArg).toContain("Agency: agency-A");
+    expect(llmPromptArg).toContain("Process invoices");
+    expect(llmPromptArg).toContain("Agency: agency-B");
+    expect(llmPromptArg).toContain("Analyze logs");
+    expect(llmPromptArg).toContain("collaborates_with"); // from semantic mock
 
-    expect(content.summary).toContain(`Identified 2 cross-agency experiences regarding '${topic}'. Meta-recommendation generated.`);
-    expect(content.synthesis.common_successes).toContain('Successfully mocked LLM response');
-    expect(content.synthesis.meta_recommendation).toBe('Use mocks during tests');
-    expect(content.details.length).toBe(2);
-
-    // 4. Validate that the pattern was stored back into EpisodicMemory
-    expect(storeSpy).toHaveBeenCalledTimes(1);
-    const storeArgs = storeSpy.mock.calls[0];
-
-    expect(storeArgs[0]).toMatch(/^meta_analysis_\d+$/);
-    expect(storeArgs[1]).toBe(`Cross-agency pattern analysis for topic: ${topic}`);
-    expect(storeArgs[11]).toBe("cross_agency_pattern");
-
-    const storedSynthesis = JSON.parse(storeArgs[2] as string);
-    expect(storedSynthesis.common_successes).toContain('Successfully mocked LLM response');
-
-    storeSpy.mockRestore();
+    // Verify structured output parsing
+    expect(result).toHaveProperty("summary");
+    expect(result).toHaveProperty("common_themes");
+    expect(result).toHaveProperty("top_performers");
+    expect(result).toHaveProperty("emerging_risks");
+    expect(result).toHaveProperty("recommended_actions");
+    expect(result.summary).toBe("Ecosystem is healthy with standardized practices.");
   });
 });

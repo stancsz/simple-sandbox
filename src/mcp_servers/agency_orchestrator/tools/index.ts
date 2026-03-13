@@ -27,7 +27,7 @@ async function getProjectState(projectId: string, memory: EpisodicMemory): Promi
     }
 
     // The solution field typically contains the JSON artifact from storing
-    const jsonStr = (doc as any).solution || (doc as any).agentResponse;
+    const jsonStr = (doc as any).solution || doc.agentResponse;
     try {
         return JSON.parse(jsonStr);
     } catch (e) {
