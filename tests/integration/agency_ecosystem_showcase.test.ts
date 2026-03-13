@@ -23,8 +23,11 @@ vi.mock("../../src/brain/episodic.js", () => {
       }
 
       async recall(topic: string, limit: number, namespace: string) {
-        // Return matches from mockDatabase
-        return Object.values(mockDatabase).filter(entry => entry.id.includes(topic) || entry.id === topic);
+        // Return matches from mockDatabase that match both topic and namespace
+        return Object.values(mockDatabase).filter(entry =>
+            (entry.id.includes(topic) || entry.id === topic) &&
+            (!namespace || entry.namespace === namespace)
+        );
       }
     }
   };
@@ -183,5 +186,43 @@ describe("Phase 33 Showcase Validation: Agency Ecosystem Demonstration", () => {
         // Assert full completion
         expect(status.status).toBe("completed");
         expect(status.overall_progress).toBe(1);
+    });
+
+    it("should run the validation script successfully", async () => {
+        // Pre-seed mock database so pattern recognition can find the expected patterns
+        // Note: EpisodicMemory.recall checks if `id` or `query` matches the topic strings. Our mock searches `id.includes(topic) || id === topic`.
+        // The topic is 'frontend-backend integration pattern'.
+        mockDatabase['pattern_mock_1_frontend-backend integration pattern'] = {
+            id: 'pattern_mock_1_frontend-backend integration pattern',
+            request: 'frontend-backend integration pattern',
+            solution: 'Use shared typescript interfaces for API schemas to avoid mismatch.',
+            tags: ["pattern", "cross_agency", "api_schema"],
+            namespace: 'agency_frontend'
+        };
+        mockDatabase['pattern_mock_2_frontend-backend integration pattern'] = {
+            id: 'pattern_mock_2_frontend-backend integration pattern',
+            request: 'frontend-backend integration pattern',
+            solution: 'Generate OpenAPI spec from backend controllers, share with frontend.',
+            tags: ["pattern", "cross_agency", "api_schema"],
+            namespace: 'agency_backend'
+        };
+
+        // Mock the LLM so EpisodicMemory.store doesn't try to call OpenAI during validation script execution
+        const { runValidation } = await import("../../scripts/validate_agency_ecosystem.js");
+
+        // Mock console to keep test output clean
+        const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+        const success = await runValidation();
+        expect(success).toBe(true);
+
+        const reportPath = path.join(process.cwd(), "demos/agency_ecosystem_showcase/validation_project/validation_report.md");
+        expect(fs.existsSync(reportPath)).toBe(true);
+
+        const report = fs.readFileSync(reportPath, "utf-8");
+        expect(report).toContain("**Validation Result:** PASS");
+        expect(report).toContain("frontend-backend integration pattern");
+
+        consoleSpy.mockRestore();
     });
 });

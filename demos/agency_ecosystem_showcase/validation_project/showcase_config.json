@@ -1,0 +1,27 @@
+{
+  "project_id": "proj_val_01",
+  "project_name": "Validation Web App",
+  "agencies": [
+    {
+      "id": "agency_frontend",
+      "niche": "Frontend Developer",
+      "mission": "Develop UI components",
+      "initial_budget_tokens": 500,
+      "capabilities": ["vue", "react"]
+    },
+    {
+      "id": "agency_backend",
+      "niche": "Backend Developer",
+      "mission": "Build robust APIs",
+      "initial_budget_tokens": 500,
+      "capabilities": ["nodejs"]
+    },
+    {
+      "id": "agency_devops",
+      "niche": "UI Designer & Integrator",
+      "mission": "Integrate and deploy",
+      "initial_budget_tokens": 500,
+      "capabilities": ["docker", "ci_cd"]
+    }
+  ]
+}
