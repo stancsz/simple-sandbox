@@ -1,0 +1,24 @@
+{
+    "name": "Validation Web App",
+    "tasks": [
+        {
+            "task_id": "api_schema",
+            "description": "Define API schema"
+        },
+        {
+            "task_id": "backend_api",
+            "description": "Implement API",
+            "dependencies": ["api_schema"]
+        },
+        {
+            "task_id": "frontend_ui",
+            "description": "Create UI components",
+            "dependencies": ["api_schema"]
+        },
+        {
+            "task_id": "integration",
+            "description": "Integrate and deploy",
+            "dependencies": ["backend_api", "frontend_ui"]
+        }
+    ]
+}
