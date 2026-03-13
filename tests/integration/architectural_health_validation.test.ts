@@ -119,7 +119,7 @@ export function highlyComplexFunction(a: number, b: number) {
         });
 
         // Wait for server to start
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 150; i++) {
             if (hmStarted) break;
             await new Promise(r => setTimeout(r, 100));
         }
