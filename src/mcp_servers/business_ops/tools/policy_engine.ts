@@ -5,13 +5,8 @@ import { CorporatePolicy } from "../../../brain/schemas.js";
 import { randomUUID } from "crypto";
 import { dirname } from "path";
 
-// Initialize Episodic Memory (singleton-ish for this module)
-// In a real server, this would be passed in or resolved via DI.
-const baseDir = process.env.JULES_AGENT_DIR ? dirname(process.env.JULES_AGENT_DIR) : process.cwd();
-const episodic = new EpisodicMemory(baseDir);
-
 // Helper to get the latest active policy
-async function getLatestPolicy(company: string = "default"): Promise<CorporatePolicy | null> {
+async function getLatestPolicy(episodic: EpisodicMemory, company: string = "default"): Promise<CorporatePolicy | null> {
     const memories = await episodic.recall("corporate_policy", 10, company, "corporate_policy");
     if (!memories || memories.length === 0) return null;
 
@@ -37,10 +32,13 @@ export async function updateOperatingPolicyLogic(
     policyUpdates: Record<string, any>,
     justification: string,
     mcp: MCP,
-    company?: string
+    company?: string,
+    episodic?: EpisodicMemory
 ) {
+    const baseDir = process.env.JULES_AGENT_DIR ? dirname(process.env.JULES_AGENT_DIR) : process.cwd();
+    const memory = episodic || new EpisodicMemory(baseDir);
     const companyId = company || "default";
-    const currentPolicy = await getLatestPolicy(companyId);
+    const currentPolicy = await getLatestPolicy(memory, companyId);
 
     const newVersion = currentPolicy ? currentPolicy.version + 1 : 1;
     const previousId = currentPolicy ? currentPolicy.id : undefined;
@@ -72,7 +70,7 @@ export async function updateOperatingPolicyLogic(
         previous_version_id: previousId
     };
 
-    await episodic.store(
+    await memory.store(
         `policy_update_v${newVersion}`,
         `Update operating policy to version ${newVersion}: ${justification}`,
         JSON.stringify(newPolicy),
@@ -95,6 +93,8 @@ export async function updateOperatingPolicyLogic(
 }
 
 export function registerPolicyEngineTools(server: McpServer) {
+    const baseDir = process.env.JULES_AGENT_DIR ? dirname(process.env.JULES_AGENT_DIR) : process.cwd();
+    const episodic = new EpisodicMemory(baseDir);
     server.tool(
         "update_operating_policy",
         "Updates the operating policy for swarms (e.g., min_margin, risk_tolerance). Creates a new version.",
@@ -108,7 +108,7 @@ export function registerPolicyEngineTools(server: McpServer) {
         },
         async ({ name, description, min_margin, risk_tolerance, max_agents_per_swarm, company }) => {
             const companyId = company || "default";
-            const currentPolicy = await getLatestPolicy(companyId);
+            const currentPolicy = await getLatestPolicy(episodic, companyId);
 
             const newVersion = currentPolicy ? currentPolicy.version + 1 : 1;
             const previousId = currentPolicy ? currentPolicy.id : undefined;
@@ -167,7 +167,7 @@ export function registerPolicyEngineTools(server: McpServer) {
             company: z.string().optional().describe("The company/client identifier for namespacing.")
         },
         async ({ company }) => {
-            const policy = await getLatestPolicy(company || "default");
+            const policy = await getLatestPolicy(episodic, company || "default");
             if (!policy) {
                 return {
                     content: [{ type: "text", text: "No active policy found." }]
@@ -187,7 +187,7 @@ export function registerPolicyEngineTools(server: McpServer) {
         },
         async ({ company }) => {
             const companyId = company || "default";
-            const currentPolicy = await getLatestPolicy(companyId);
+            const currentPolicy = await getLatestPolicy(episodic, companyId);
 
             if (!currentPolicy) {
                 return {

@@ -15,12 +15,17 @@ Phase 34 introduces the capability for the root Simple-CLI agency to perform met
 - **Purpose**: Translates ecosystem analysis into actionable governance.
 - **Functionality**: Uses an LLM to review the analysis report and draft an update to the `CorporateStrategy` or `OperatingPolicy`. It relies on the existing `proposeStrategicPivot` tool to formalize the adoption.
 
-### 3. Scheduler Integration
+### 3. `apply_ecosystem_insights` (Brain MCP) - Phase 35
+- **File**: `src/mcp_servers/brain/tools/apply_ecosystem_insights.ts`
+- **Purpose**: Translates meta-learning patterns directly into actionable, automated swarm parameter adjustments.
+- **Functionality**: Queries `analyze_ecosystem_patterns` to get the latest insights, then uses an LLM to generate specific updates for parameters like `max_agents_per_swarm` or `min_margin`. It automatically applies these using `updateOperatingPolicyLogic` and logs the action as an `ecosystem_optimization` memory.
+
+### 4. Scheduler Integration
 - **File**: `src/scheduler/config.ts`
 - **Purpose**: Ensures continuous, automated learning.
 - **Functionality**: Adds the `weekly_ecosystem_analysis` cron task, running the `analyze_ecosystem_patterns` tool periodically.
 
-### 4. Health Monitor Integration
+### 5. Health Monitor Integration
 - **File**: `src/mcp_servers/health_monitor/index.ts`
 - **Purpose**: Observability for ecosystem state.
 - **Functionality**: The new `get_ecosystem_health` tool surfaces insights based on the ecosystem patterns, allowing the root agency to keep track of its intelligence cycle status.

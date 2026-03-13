@@ -15,6 +15,7 @@ import { readStrategy, proposeStrategicPivot, proposeEcosystemPolicyUpdate } fro
 import { scanStrategicHorizon } from "./tools/scan_strategic_horizon.js";
 import { registerStrategicDecisionTools } from "./tools/strategic_decisions.js";
 import { registerCollectiveLearningTools } from "./tools/collective_learning.js";
+import { registerApplyEcosystemInsightsTool } from "./tools/apply_ecosystem_insights.js";
 import { conveneBoardMeeting } from "./tools/convene_board_meeting.js";
 import { getGrowthTargets } from "./tools/strategic_growth.js";
 import { monitorMarketSignals, evaluateEconomicRisk, triggerContingencyPlan } from "./tools/market_shock.js";
@@ -50,6 +51,9 @@ export class BrainServer {
 
     // Register Collective Learning tools
     registerCollectiveLearningTools(this.server, this.episodic);
+
+    // Register Apply Ecosystem Insights tool
+    registerApplyEcosystemInsightsTool(this.server, this.episodic);
 
     // Auto-discover frameworks on startup
     this.frameworkEngine.scanForFrameworks().then(discovered => {
