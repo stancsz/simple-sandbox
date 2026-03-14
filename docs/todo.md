@@ -384,6 +384,6 @@
 ## Phase 36: Autonomous Ecosystem Evolution
 *Status: Active*
 *Current Focus: Enable the root agency to dynamically restructure the agency ecosystem based on meta-learning, market signals, and performance metrics, creating a self-improving collective that adapts to changing conditions.*
-- [ ] Implement `adjust_ecosystem_morphology` tool in Brain MCP.
+- [x] Implement `adjust_ecosystem_morphology` tool in Brain MCP.
 - [ ] Integrate with Agency Orchestrator to execute spawn/merge/retire actions.
-- [ ] Write robust integration tests for Phase 36 functionality (`tests/integration/phase36_ecosystem_evolution.test.ts`).
+- [x] Write robust integration tests for Phase 36 functionality (`tests/integration/phase36_ecosystem_evolution.test.ts`).

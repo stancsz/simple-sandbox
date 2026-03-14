@@ -2,6 +2,10 @@ import { EpisodicMemory } from "../../../brain/episodic.js";
 import { z } from "zod";
 import { createLLM } from "../../../llm.js";
 import { analyzeEcosystemPatterns } from "./pattern_analysis.js";
+import { monitorMarketSignals } from "./market_shock.js";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { join } from "path";
 
 export const adjustEcosystemMorphologySchema = z.object({
   agency_statuses: z.array(z.object({
@@ -19,7 +23,8 @@ export type AdjustEcosystemMorphologyInput = z.infer<typeof adjustEcosystemMorph
 export interface StructuralDecision {
   action: "spawn" | "merge" | "retire" | "maintain";
   target_agencies: string[]; // empty for spawn
-  reasoning: string;
+  rationale: string;
+  expected_impact?: string;
   config?: {
     role?: string;
     resource_limit?: number;
@@ -32,108 +37,128 @@ export async function adjustEcosystemMorphology(
   memory: EpisodicMemory
 ): Promise<StructuralDecision[]> {
   const { agency_statuses } = input;
-  const decisions: StructuralDecision[] = [];
-
-  // Query meta-learning insights (from Phase 34 pattern analysis)
   const llm = createLLM();
+
+  // 1. Query meta-learning insights (from Phase 34 pattern analysis)
   let ecosystemInsights;
   try {
     ecosystemInsights = await analyzeEcosystemPatterns(memory, llm);
   } catch (e) {
-    console.warn("Could not retrieve ecosystem patterns, falling back to rule-based only.", e);
+    console.warn("Could not retrieve ecosystem patterns.", e);
+    ecosystemInsights = { analysis: "No recent ecosystem patterns found." };
   }
 
-  // Rule-based algorithm
-  const highWorkloadThreshold = 0.85;
-  const lowUtilizationThreshold = 0.20;
-  const highFailureThreshold = 0.40;
-  const lowEfficiencyThreshold = 0.30;
-
-  const roleWorkloads: Record<string, number> = {};
-  const activeAgencies: Set<string> = new Set();
-
-  for (const status of agency_statuses) {
-    activeAgencies.add(status.agency_id);
-
-    // Track total tasks assigned per role to spot bottlenecks
-    if (!roleWorkloads[status.role]) {
-      roleWorkloads[status.role] = 0;
-    }
-    roleWorkloads[status.role] += status.tasks_assigned;
-
-    const failureRate = status.tasks_assigned > 0 ? status.tasks_failed / status.tasks_assigned : 0;
-
-    // Retire conditions: low utilization AND high failure, OR very low efficiency
-    if ((status.utilization_rate < lowUtilizationThreshold && failureRate > highFailureThreshold) ||
-        status.token_efficiency < lowEfficiencyThreshold) {
-      decisions.push({
-        action: "retire",
-        target_agencies: [status.agency_id],
-        reasoning: `Agency ${status.agency_id} (${status.role}) is underperforming (Utilization: ${status.utilization_rate}, Failure Rate: ${failureRate}, Token Efficiency: ${status.token_efficiency}). Retiring.`
-      });
-      activeAgencies.delete(status.agency_id);
-    }
+  // 2. Monitor market signals
+  let marketSignals;
+  try {
+    marketSignals = await monitorMarketSignals();
+  } catch (e) {
+    console.warn("Could not retrieve market signals.", e);
+    marketSignals = { status: "unknown" };
   }
 
-  // Merge conditions: Multiple underutilized agencies of the same role
-  const roleGroups: Record<string, string[]> = {};
-  for (const status of agency_statuses) {
-      if (!activeAgencies.has(status.agency_id)) continue;
-      if (!roleGroups[status.role]) roleGroups[status.role] = [];
-      roleGroups[status.role].push(status.agency_id);
-  }
+  // 3. Query Health Monitor MCP for performance KPIs
+  let healthMetrics: any = { status: "unknown" };
+  try {
+    const healthMonitorPath = join(process.cwd(), "dist/mcp_servers/health_monitor/index.js");
+    const transport = new StdioClientTransport({
+      command: "node",
+      args: [healthMonitorPath],
+    });
+    const mcpClient = new Client({ name: "brain-morphology-client", version: "1.0.0" }, { capabilities: {} });
+    await mcpClient.connect(transport);
 
-  for (const [role, agencyIds] of Object.entries(roleGroups)) {
-      if (agencyIds.length > 1) {
-          const statuses = agency_statuses.filter(s => agencyIds.includes(s.agency_id));
-          const allUnderutilized = statuses.every(s => s.utilization_rate < 0.4);
-          if (allUnderutilized) {
-              const mergeTarget = statuses[0].agency_id;
-              const toMerge = statuses.slice(1).map(s => s.agency_id);
+    const healthResult = await mcpClient.callTool({
+      name: "get_ecosystem_health",
+      arguments: {}
+    });
 
-              for (const id of toMerge) {
-                  decisions.push({
-                      action: "merge",
-                      target_agencies: [id, mergeTarget],
-                      reasoning: `Agencies ${id} and ${mergeTarget} (${role}) are underutilized. Merging into ${mergeTarget}.`,
-                      config: { merge_into: mergeTarget }
-                  });
-                  activeAgencies.delete(id);
-              }
-          }
+    if (healthResult && Array.isArray(healthResult.content) && healthResult.content.length > 0 && typeof healthResult.content[0] === 'object' && healthResult.content[0] !== null && 'text' in healthResult.content[0]) {
+      try {
+        healthMetrics = JSON.parse((healthResult.content[0] as any).text);
+      } catch (err) {
+        healthMetrics = { raw: (healthResult.content[0] as any).text };
       }
+    }
+    await mcpClient.close();
+  } catch (e) {
+    console.warn("Could not retrieve health metrics from Health Monitor MCP.", e);
   }
 
-  // Spawn conditions: High workload bottleneck
-  for (const status of agency_statuses) {
-      if (!activeAgencies.has(status.agency_id)) continue;
+  // 4. Construct prompt for LLM analysis
+  const prompt = `
+You are the Brain of an autonomous multi-agency ecosystem.
+Your task is to analyze the following data and propose structural changes (spawn, merge, retire, maintain) to the ecosystem.
 
-      if (status.utilization_rate > highWorkloadThreshold && status.tasks_assigned > 5) {
-          decisions.push({
-              action: "spawn",
-              target_agencies: [],
-              reasoning: `Agency ${status.agency_id} (${status.role}) is overloaded (Utilization: ${status.utilization_rate}). Spawning a new agency for role ${status.role} to distribute load.`,
-              config: { role: status.role, resource_limit: 50000 }
-          });
-      }
+### Current Agency Statuses:
+${JSON.stringify(agency_statuses, null, 2)}
+
+### Ecosystem Meta-Learning Patterns:
+${JSON.stringify(ecosystemInsights, null, 2)}
+
+### Market Signals:
+${JSON.stringify(marketSignals, null, 2)}
+
+### Ecosystem Health Metrics:
+${JSON.stringify(healthMetrics, null, 2)}
+
+Evaluate the metrics and signals to decide if agencies should be spawned (for overload/bottlenecks), merged (underutilized of same role), retired (failing/inefficient), or maintained (if healthy).
+
+Output a valid JSON array of objects representing your decisions. Each object MUST conform exactly to the following structure:
+{
+  "action": "spawn" | "merge" | "retire" | "maintain",
+  "target_agencies": ["agency_id_1", "agency_id_2"], // Empty array for spawn
+  "rationale": "Detailed explanation of why this action is taken.",
+  "expected_impact": "What this change is expected to achieve.",
+  "config": { // Optional, required for spawn or merge
+    "role": "role_name", // For spawn
+    "resource_limit": 50000, // For spawn
+    "merge_into": "target_agency_id" // For merge
+  }
+}
+
+Return ONLY the JSON array, with no markdown formatting or extra text.
+`;
+
+  let decisions: StructuralDecision[] = [];
+  try {
+    const response = await llm.generate(
+      "You are the structural orchestrator. Always output valid JSON representing the decisions.",
+      [{ role: "user", content: prompt }]
+    );
+
+    let rawOutput = response.raw.trim();
+    if (rawOutput.startsWith("```json")) rawOutput = rawOutput.substring(7);
+    if (rawOutput.endsWith("```")) rawOutput = rawOutput.substring(0, rawOutput.length - 3);
+
+    decisions = JSON.parse(rawOutput.trim());
+
+    // Fallback if empty
+    if (!Array.isArray(decisions) || decisions.length === 0) {
+      decisions = [{
+        action: "maintain",
+        target_agencies: [],
+        rationale: "LLM provided no decisions, defaulting to maintain.",
+        expected_impact: "System remains in current state."
+      }];
+    }
+  } catch (e) {
+    console.error("Failed to parse LLM decisions, falling back to maintain.", e);
+    decisions = [{
+      action: "maintain",
+      target_agencies: [],
+      rationale: "Error analyzing data, defaulting to maintain.",
+      expected_impact: "System remains in current state."
+    }];
   }
 
-  // If no changes needed
-  if (decisions.length === 0) {
-      decisions.push({
-          action: "maintain",
-          target_agencies: [],
-          reasoning: "Ecosystem morphology is optimal. No structural changes required."
-      });
-  }
-
-  // Log to EpisodicMemory
+  // 5. Log to EpisodicMemory
   await memory.store(
     `ecosystem_evolution_${Date.now()}`,
-    "Adjust ecosystem morphology based on metrics",
+    "Adjust ecosystem morphology based on metrics, market signals, and meta-learning",
     JSON.stringify(decisions),
     ["brain", "ecosystem_evolution", "morphology"],
-    "ecosystem_morphology_decision"
+    "ecosystem_morphology_proposal"
   );
 
   return decisions;
