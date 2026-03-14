@@ -112,25 +112,31 @@ export const update_company_with_ecosystem_insights = async (
     }
 
     // Insert into the company's vector database to make it part of their context
-    const db = await getDb(company_id);
-    let table = await getTable(db);
+    try {
+        const db = await getDb(company_id);
+        if (db) {
+            let table = await getTable(db);
 
-    const insightContent = `ECOSYSTEM META-LEARNING INSIGHTS FOR ${company_id.toUpperCase()}:\n\n` + insights.map(i => `- ${i}`).join("\n");
-    const embedding = await llm.embed(insightContent);
+            const insightContent = `ECOSYSTEM META-LEARNING INSIGHTS FOR ${company_id.toUpperCase()}:\n\n` + insights.map(i => `- ${i}`).join("\n");
+            const embedding = await llm.embed(insightContent);
 
-    if (embedding) {
-        const data = {
-            id: `ecosystem_insight_${Date.now()}`,
-            content: insightContent,
-            source: "brain_ecosystem_policy",
-            vector: embedding,
-        };
+            if (embedding) {
+                const data = {
+                    id: `ecosystem_insight_${Date.now()}`,
+                    content: insightContent,
+                    source: "brain_ecosystem_policy",
+                    vector: embedding,
+                };
 
-        if (!table) {
-            table = await db.createTable("documents", [data]);
-        } else {
-            await table.add([data]);
+                if (!table) {
+                    table = await db.createTable("documents", [data]);
+                } else {
+                    await table.add([data]);
+                }
+            }
         }
+    } catch (e: any) {
+        console.warn(`Could not store insights in vector DB for ${company_id}: ${e.message}`);
     }
 
     // Store in episodic memory for tracking

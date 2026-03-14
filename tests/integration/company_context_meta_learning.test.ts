@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { update_company_with_ecosystem_insights } from '../../src/mcp_servers/company_context/tools/meta_learning_integration.js';
+import { update_company_with_ecosystem_insights } from '../../src/mcp_servers/company_context/tools.js';
 import { CompanyManager } from '../../src/company_context/manager.js';
 import { EpisodicMemory } from '../../src/brain/episodic.js';
 
@@ -48,33 +48,33 @@ vi.mock('../../src/llm.js', () => {
         createLLM: () => ({
             embed: async () => new Array(1536).fill(0),
             generate: async (prompt: string) => {
-                // If it's a pattern analysis, return some JSON.
-                if (prompt.includes("Ecosystem Intelligence Engine")) {
-                    // Check if company attributes were provided
+                // Phase 35 LLM Prompt for Company Context Insights
+                if (prompt.includes("Ecosystem Optimization Engine")) {
                     if (prompt.includes("industry\":") || prompt.includes("general")) {
-                        return {
-                            message: JSON.stringify({
-                                summary: "Tailored insights generated.",
-                                themes: ["Personalized Success"],
-                                performance_insights: [],
-                                bottlenecks: [],
-                                recommended_global_actions: []
-                            })
-                        };
+                        return { message: JSON.stringify(["Tailored insights generated.", "Personalized Success"]) };
                     } else {
-                        return {
-                            message: JSON.stringify({
-                                summary: "General insights generated.",
-                                themes: ["General Success"],
-                                performance_insights: [],
-                                bottlenecks: [],
-                                recommended_global_actions: []
-                            })
-                        };
+                        return { message: JSON.stringify(["General insights generated.", "General Success"]) };
                     }
                 }
-                return { message: "Mocked LLM response" };
+                return { message: "[]" };
             }
+        })
+    };
+});
+
+// Mock LanceDB locally to avoid DB errors
+vi.mock('@lancedb/lancedb', () => {
+    return {
+        connect: vi.fn().mockImplementation(async () => {
+            return {
+                tableNames: vi.fn().mockResolvedValue(["documents"]),
+                openTable: vi.fn().mockResolvedValue({
+                    add: vi.fn().mockResolvedValue(true)
+                }),
+                createTable: vi.fn().mockResolvedValue({
+                    add: vi.fn().mockResolvedValue(true)
+                })
+            };
         })
     };
 });
@@ -83,13 +83,14 @@ describe('Company Context Meta-Learning Integration', () => {
     beforeEach(() => {
         memoryStore.clear();
 
-        // Seed default ecosystem memories to avoid "No cross-agency data"
+        // Seed default ecosystem policy to satisfy the new Phase 35 logic
         memoryStore.set('default', [
             {
-                source_agency: 'agency_a',
-                taskId: 'test',
-                userPrompt: 'test prompt',
-                agentResponse: 'test response',
+                type: 'ecosystem_policy',
+                solution: JSON.stringify({
+                    target_agencies: 'all',
+                    parameters: { optimize: true }
+                }),
                 timestamp: Date.now()
             }
         ]);
@@ -101,7 +102,7 @@ describe('Company Context Meta-Learning Integration', () => {
 
     it('should fall back to default attributes and generate insights if no attributes exist', async () => {
         const result = await update_company_with_ecosystem_insights('test-company');
-        expect(result).toBe('Successfully applied ecosystem insights for company test-company.');
+        expect(result).toBe('Successfully applied 2 ecosystem insights for company test-company.');
 
         const memories = memoryStore.get('test-company') || [];
 
@@ -138,7 +139,7 @@ describe('Company Context Meta-Learning Integration', () => {
         memoryStore.set('context-company', [
             {
                 type: 'meta_learning_insight',
-                agentResponse: JSON.stringify({ summary: "Ecosystem suggests focusing on X." })
+                agentResponse: JSON.stringify({ applied_insights: ["Ecosystem suggests focusing on X."] })
             }
         ]);
 
