@@ -97,8 +97,21 @@ export function highlyComplexFunction(a: number, b: number) {
         const { existsSync, readFileSync } = await import('fs');
         expect(existsSync(filename)).toBe(true);
 
-        const content = readFileSync(filename, 'utf-8');
+
+        // Wait for file flush
+        await new Promise(r => setTimeout(r, 1000));
+
+        let content = '';
+        for (let i=0; i<10; i++) {
+            if (existsSync(filename)) {
+                content = readFileSync(filename, 'utf-8');
+                if (content.includes('architecture_total_files')) break;
+            }
+            await new Promise(r => setTimeout(r, 500));
+        }
+
         expect(content).toContain('architecture_total_files');
+
         expect(content).toContain('architecture_avg_complexity');
         expect(content).toContain('architecture_total_loc');
 
