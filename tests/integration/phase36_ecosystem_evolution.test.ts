@@ -9,20 +9,86 @@ class MockEpisodicMemory {
   }
 }
 
-// Ensure the LLM used for pattern analysis does not throw unhandled errors during our mock tests
+// Mock @modelcontextprotocol/sdk/client/index.js
+vi.mock('@modelcontextprotocol/sdk/client/index.js', () => {
+    return {
+        Client: vi.fn().mockImplementation(() => ({
+            connect: vi.fn().mockResolvedValue(undefined),
+            callTool: vi.fn().mockResolvedValue({
+                content: [{ text: JSON.stringify({ status: "healthy", score: 95 }) }]
+            }),
+            close: vi.fn().mockResolvedValue(undefined)
+        }))
+    };
+});
+
+vi.mock('@modelcontextprotocol/sdk/client/stdio.js', () => {
+    return {
+        StdioClientTransport: vi.fn().mockImplementation(() => ({}))
+    };
+});
+
+// Mock LLM to return different outcomes based on the prompt content
 vi.mock('../../src/llm.js', () => {
     return {
         createLLM: vi.fn().mockReturnValue({
-            generate: vi.fn().mockResolvedValue({ raw: "{}" }),
+            generate: vi.fn().mockImplementation(async (sys: string, msgs: any[]) => {
+                const prompt = msgs[0].content;
+                let decisions = [];
+
+                if (prompt.includes('agency_healthy_1')) {
+                    decisions = [{
+                        action: 'maintain',
+                        target_agencies: [],
+                        rationale: 'Agencies are healthy.',
+                        expected_impact: 'System remains in current state.'
+                    }];
+                } else if (prompt.includes('agency_bottleneck_1')) {
+                    decisions = [{
+                        action: 'spawn',
+                        target_agencies: [],
+                        rationale: 'Agency is overloaded.',
+                        expected_impact: 'Load balanced.',
+                        config: { role: 'developer', resource_limit: 50000 }
+                    }];
+                } else if (prompt.includes('agency_failing_1') || prompt.includes('agency_inefficient_1')) {
+                    const failingId = prompt.includes('agency_failing_1') ? 'agency_failing_1' : 'agency_inefficient_1';
+                    decisions = [{
+                        action: 'retire',
+                        target_agencies: [failingId],
+                        rationale: 'Agency is underperforming.',
+                        expected_impact: 'Freed resources.'
+                    }];
+                } else if (prompt.includes('agency_idle_1')) {
+                    decisions = [{
+                        action: 'merge',
+                        target_agencies: ['agency_idle_1', 'agency_idle_2'],
+                        rationale: 'Agencies are underutilized.',
+                        expected_impact: 'Optimized resources.',
+                        config: { merge_into: 'agency_idle_1' }
+                    }];
+                } else {
+                    // Complex scenario
+                    decisions = [
+                        { action: 'retire', target_agencies: ['agency_failing'], rationale: 'failing', expected_impact: 'freed' },
+                        { action: 'spawn', target_agencies: [], rationale: 'overloaded', expected_impact: 'balanced', config: { role: 'engineer' } },
+                        { action: 'merge', target_agencies: ['agency_merge_1', 'agency_merge_2'], rationale: 'idle', expected_impact: 'optimized', config: { merge_into: 'agency_merge_1' } }
+                    ];
+                }
+
+                return { raw: JSON.stringify(decisions) };
+            }),
             embed: vi.fn().mockResolvedValue(new Array(1536).fill(0.1))
         })
     };
 });
 
-// Since the `ecosystem_evolution` uses `analyzeEcosystemPatterns` inside, we can also mock the analysis
-// so it returns safely, but our tests here focus mostly on the rule-based structural logic.
 vi.mock('../../src/mcp_servers/brain/tools/pattern_analysis.js', () => ({
     analyzeEcosystemPatterns: vi.fn().mockResolvedValue({ analysis: "mock insights" })
+}));
+
+vi.mock('../../src/mcp_servers/brain/tools/market_shock.js', () => ({
+    monitorMarketSignals: vi.fn().mockResolvedValue({ status: "stable" })
 }));
 
 describe('Phase 36: Autonomous Ecosystem Evolution', () => {
@@ -52,8 +118,8 @@ describe('Phase 36: Autonomous Ecosystem Evolution', () => {
         expect(decisions[0].action).toBe('maintain');
 
         expect(memory.storeCalls.length).toBe(1);
-        expect(memory.storeCalls[0][1]).toBe("Adjust ecosystem morphology based on metrics");
-        expect(memory.storeCalls[0][4]).toBe("ecosystem_morphology_decision");
+        expect(memory.storeCalls[0][1]).toBe("Adjust ecosystem morphology based on metrics, market signals, and meta-learning");
+        expect(memory.storeCalls[0][4]).toBe("ecosystem_morphology_proposal");
     });
 
     it('should spawn a new agency when utilization is high and there is a bottleneck', async () => {
@@ -75,7 +141,7 @@ describe('Phase 36: Autonomous Ecosystem Evolution', () => {
         const spawnDecision = decisions.find(d => d.action === 'spawn');
         expect(spawnDecision).toBeDefined();
         expect(spawnDecision?.config?.role).toBe('developer');
-        expect(spawnDecision?.reasoning).toContain('overloaded');
+        expect(spawnDecision?.rationale).toContain('overloaded');
     });
 
     it('should retire an agency that is severely underperforming', async () => {
@@ -97,7 +163,7 @@ describe('Phase 36: Autonomous Ecosystem Evolution', () => {
         const retireDecision = decisions.find(d => d.action === 'retire');
         expect(retireDecision).toBeDefined();
         expect(retireDecision?.target_agencies).toContain('agency_failing_1');
-        expect(retireDecision?.reasoning).toContain('underperforming');
+        expect(retireDecision?.rationale).toContain('underperforming');
     });
 
     it('should retire an agency due to critically low token efficiency', async () => {
