@@ -71,7 +71,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   if (request.params.name === "log_audit_event") {
     const input = logAuditEventSchema.parse(request.params.arguments);
-    const event = await auditLogger.logEvent(input);
+    const event = await auditLogger.logEvent({
+      ...input,
+      agencies_involved: input.agencies_involved || [],
+      payload: input.payload || {}
+    });
     return {
       content: [{ type: "text", text: JSON.stringify(event, null, 2) }]
     };
