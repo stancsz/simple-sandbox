@@ -1,6 +1,17 @@
-import { describe, it, expect } from 'vitest';
-import { generateEcosystemAuditReport, generateEcosystemAuditReportSchema } from '../../src/mcp_servers/ecosystem_auditor/tools.js';
+import { describe, it, expect, vi } from 'vitest';
+import { generateEcosystemAuditReportSchema } from '../../src/mcp_servers/ecosystem_auditor/schemas/audit_report.js';
+import { generateEcosystemAuditReport } from '../../src/mcp_servers/ecosystem_auditor/tools/audit_report.js';
 import { server } from '../../src/mcp_servers/ecosystem_auditor/index.js';
+
+// Mock LLM so the test doesn't actually hit APIs and matches the new implementation
+vi.mock("../../src/llm.js", () => {
+  return {
+    createLLM: () => ({
+      generate: vi.fn().mockResolvedValue({ raw: JSON.stringify({ summary: "Audit report generated" }) }),
+      embed: vi.fn().mockResolvedValue(new Array(1536).fill(0.1))
+    })
+  };
+});
 
 describe('Phase 37: Ecosystem Auditor Scaffold Validation', () => {
 
@@ -24,8 +35,8 @@ describe('Phase 37: Ecosystem Auditor Scaffold Validation', () => {
 
     expect(result).toHaveProperty('report_id');
     expect(result.timeframe).toBe('last_24_hours');
-    expect(result.summary).toContain('Audit report generated');
-    expect(result.events).toEqual([]); // Initial empty scaffold state
+    expect(result.summary).toContain('No relevant audit logs found'); // Since there are no logs during this test
+    expect(result.communication_patterns).toEqual([]); // New schema check
   });
 
   it('should throw validation error on missing required timeframe', () => {
