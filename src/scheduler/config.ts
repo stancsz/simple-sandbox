@@ -29,5 +29,19 @@ export const DEFAULT_TASKS: TaskDefinition[] = [
     },
     company: undefined,
     description: "Periodically analyzes ecosystem patterns for global meta-learning and policy optimization."
+  } as TaskDefinition,
+  {
+    id: "weekly_context_personalization",
+    name: "Weekly Context Personalization",
+    trigger: "cron",
+    schedule: "0 14 * * 0", // Every Sunday at 2:00 PM
+    action: "mcp.call_tool",
+    args: {
+        server: "brain",
+        tool: "personalize_all_company_contexts",
+        arguments: {}
+    },
+    company: undefined,
+    description: "Automatically injects global meta-learning insights directly into the vector databases of all active company contexts."
   } as TaskDefinition
 ];

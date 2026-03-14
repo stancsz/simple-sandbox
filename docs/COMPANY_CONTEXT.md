@@ -86,6 +86,16 @@ For Slack and Teams interfaces, you can specify the company context dynamically 
 
 This isolates the session to the specified company without restarting the server.
 
+## Meta-Learning Integration
+
+The Company Context system integrates with the Brain's **Applied Meta-Learning & Ecosystem Optimization** (Phase 35). The root agency continually learns from the entire Simple-CLI network of spawned agencies.
+
+Every week (or on demand), the Brain MCP analyzes the global episodic memory and synthesizes actionable insights (e.g., successful patterns, efficiency optimizations, and common bottlenecks).
+
+The Brain MCP then triggers the `update_company_context` tool on the Company Context MCP to inject a personalized version of these insights directly into the `documents` table of a company's LanceDB vector store (tagged with `source: ecosystem_meta_learning`).
+
+When subsequent tasks are executed for that company, the RAG implementation automatically fetches these injected meta-insights alongside the company's manual documentation, enabling localized swarms to instantly benefit from the global collective intelligence.
+
 ## Tools
 
 -   `load_company_context(company_id)`: Ingests documents from the docs folder.

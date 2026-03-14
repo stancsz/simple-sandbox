@@ -66,7 +66,8 @@ The roadmap is structured around the four anatomical layers of the Digital Biosp
 - [ ] Implement `apply_ecosystem_insights` tool to automatically adjust swarm parameters based on meta-learning.
 - [x] Enhance the Scheduler to use ecosystem patterns for predictive task assignment.
       ✅ Enhanced Scheduler MCP to query Brain's ecosystem patterns for predictive agency assignment via `agency_orchestrator`. Validated via integration tests.
-- [ ] Integrate meta-learning findings into Company Contexts for personalized client optimization.
+- [x] Integrate meta-learning findings into Company Contexts for personalized client optimization.
+      ✅ Added `personalize_company_context` logic to the Brain MCP to synthesize and inject actionable global insights directly into a specific company's vector DB via the Company Context MCP. Validated via `tests/integration/phase35_personalize_company_context.test.ts`.
 - [ ] Validate via a multi-agency simulation demonstrating improved efficiency.
 
 ## Phase 25: Autonomous Corporate Consciousness

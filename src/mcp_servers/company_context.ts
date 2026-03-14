@@ -188,6 +188,55 @@ export class CompanyContextServer {
             };
         }
     );
+
+    this.server.tool(
+      "update_company_context",
+      "Injects meta-learning insights directly into the company's vector database.",
+      {
+        company_id: z.string().describe("The ID of the company."),
+        insight_payload: z.string().describe("The JSON or text payload of the meta-learning insight."),
+      },
+      async ({ company_id, insight_payload }) => {
+        if (!/^[a-zA-Z0-9_-]+$/.test(company_id)) {
+             return {
+                content: [{ type: "text", text: "Invalid company ID." }],
+                isError: true
+             };
+        }
+
+        try {
+            const db = await this.getDb(company_id);
+            let table = await this.getTable(db);
+
+            const embedding = await this.llm.embed(insight_payload);
+            if (!embedding) {
+                return { content: [{ type: "text", text: "Failed to generate embedding for insight." }], isError: true };
+            }
+
+            const data = {
+                id: `meta_insight_${Date.now()}`,
+                content: insight_payload,
+                source: "ecosystem_meta_learning",
+                vector: embedding,
+            };
+
+            if (!table) {
+                table = await db.createTable("documents", [data]);
+            } else {
+                await table.add([data]);
+            }
+
+            return {
+                content: [{ type: "text", text: `Successfully injected meta-learning insight into ${company_id} context.` }],
+            };
+        } catch (e: any) {
+            return {
+                content: [{ type: "text", text: `Error updating company context: ${e.message}` }],
+                isError: true
+            };
+        }
+      }
+    );
   }
 
   async run() {

@@ -23,6 +23,7 @@ import { crossAgencyPatternRecognition, analyzeCrossAgencyPatterns, analyzeEcosy
 import { globalSymbolicEngine } from "../../symbolic/compiler.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { personalize_company_context } from "./tools/apply_ecosystem_insights.js";
 
 export class BrainServer {
   private server: McpServer;
@@ -142,6 +143,144 @@ export class BrainServer {
         } catch (e: any) {
           return {
             content: [{ type: "text", text: `Failed to analyze cross-agency patterns: ${e.message}` }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.tool(
+      "personalize_company_context",
+      "Retrieves global ecosystem meta-learning insights and injects a personalized summary into a specific company's vector database.",
+      {
+        company_id: z.string().describe("The ID of the company to personalize insights for."),
+        insight_type: z.string().optional().describe("Optional filter for the type of insight (e.g., 'efficiency', 'cost_optimization').")
+      },
+      async ({ company_id, insight_type }) => {
+        try {
+          const llm = createLLM();
+
+          // 1. Get personalized insights
+          const insights = await personalize_company_context(company_id, this.episodic, llm, insight_type);
+
+          // 2. Call Company Context Server to inject
+          const companyContextSrc = join(process.cwd(), "src", "mcp_servers", "company_context.ts");
+          const companyContextDist = join(process.cwd(), "dist", "mcp_servers", "company_context.js");
+          let cmd = "node";
+          let clientArgs = [companyContextDist];
+          if (existsSync(companyContextSrc) && !existsSync(companyContextDist)) {
+             cmd = "npx";
+             clientArgs = ["tsx", companyContextSrc];
+          }
+
+          const transport = new StdioClientTransport({ command: cmd, args: clientArgs });
+          const ccClient = new Client({ name: "brain-to-cc", version: "1.0.0" }, { capabilities: {} });
+          await ccClient.connect(transport);
+
+          const result: any = await ccClient.callTool({
+             name: "update_company_context",
+             arguments: { company_id, insight_payload: insights }
+          });
+          await ccClient.close();
+
+          if (result.isError) {
+             return {
+                 content: [{ type: "text", text: `Failed to inject insights into company context: ${JSON.stringify(result.content)}` }],
+                 isError: true
+             };
+          }
+
+          return { content: [{ type: "text", text: `Successfully personalized context for ${company_id} with global ecosystem insights.\n\nInsights injected:\n${insights}` }] };
+        } catch (e: any) {
+          return {
+            content: [{ type: "text", text: `Failed to personalize company context: ${e.message}` }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.tool(
+      "personalize_all_company_contexts",
+      "Iterates over all active companies in the fleet and injects personalized meta-learning insights into each of their vector databases.",
+      {},
+      async () => {
+        try {
+          // 1. Call business_ops to get fleet status
+          const businessOpsSrc = join(process.cwd(), "src", "mcp_servers", "business_ops", "index.ts");
+          const businessOpsDist = join(process.cwd(), "dist", "mcp_servers", "business_ops", "index.js");
+          let cmd = "node";
+          let clientArgs = [businessOpsDist];
+          if (existsSync(businessOpsSrc) && !existsSync(businessOpsDist)) {
+             cmd = "npx";
+             clientArgs = ["tsx", businessOpsSrc];
+          }
+
+          const transport = new StdioClientTransport({ command: cmd, args: clientArgs });
+          const boClient = new Client({ name: "brain-to-bo", version: "1.0.0" }, { capabilities: {} });
+          await boClient.connect(transport);
+
+          const fleetResult: any = await boClient.callTool({
+             name: "get_fleet_status",
+             arguments: {}
+          });
+          await boClient.close();
+
+          if (fleetResult.isError) {
+             return {
+                 content: [{ type: "text", text: `Failed to retrieve fleet status: ${JSON.stringify(fleetResult.content)}` }],
+                 isError: true
+             };
+          }
+
+          const fleetStatusStr = fleetResult.content[0].text;
+          const fleetStatus = JSON.parse(fleetStatusStr);
+
+          if (!fleetStatus.agencies || fleetStatus.agencies.length === 0) {
+              return { content: [{ type: "text", text: "No active companies/agencies found in fleet status." }] };
+          }
+
+          const llm = createLLM();
+          const results = [];
+
+          // 2. Iterate and personalize each company
+          for (const agency of fleetStatus.agencies) {
+              const companyId = agency.company_id || agency.id; // Fallback to id if company_id is not set
+              if (!companyId) continue;
+
+              try {
+                  const insights = await personalize_company_context(companyId, this.episodic, llm);
+
+                  // Call Company Context Server to inject
+                  const companyContextSrc = join(process.cwd(), "src", "mcp_servers", "company_context.ts");
+                  const companyContextDist = join(process.cwd(), "dist", "mcp_servers", "company_context.js");
+                  let ccCmd = "node";
+                  let ccArgs = [companyContextDist];
+                  if (existsSync(companyContextSrc) && !existsSync(companyContextDist)) {
+                     ccCmd = "npx";
+                     ccArgs = ["tsx", companyContextSrc];
+                  }
+
+                  const ccTransport = new StdioClientTransport({ command: ccCmd, args: ccArgs });
+                  const ccClient = new Client({ name: "brain-to-cc-batch", version: "1.0.0" }, { capabilities: {} });
+                  await ccClient.connect(ccTransport);
+
+                  await ccClient.callTool({
+                     name: "update_company_context",
+                     arguments: { company_id: companyId, insight_payload: insights }
+                  });
+                  await ccClient.close();
+
+                  results.push(`Successfully personalized context for ${companyId}`);
+              } catch (err: any) {
+                  results.push(`Failed to personalize context for ${companyId}: ${err.message}`);
+              }
+          }
+
+          return { content: [{ type: "text", text: results.join("\n") }] };
+        } catch (e: any) {
+          return {
+            content: [{ type: "text", text: `Failed to personalize all company contexts: ${e.message}` }],
             isError: true
           };
         }
