@@ -6,7 +6,8 @@ import {
   ErrorCode,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import { generateEcosystemAuditReport, generateEcosystemAuditReportSchema } from "./tools.js";
+import { generateEcosystemAuditReportSchema } from "./schemas/audit_report.js";
+import { generateEcosystemAuditReport } from "./tools/audit_report.js";
 
 /**
  * The Ecosystem Auditor MCP Server instance.
