@@ -87,7 +87,7 @@ export class SOPExecutor {
 
         if (validConfigs.length > 0) {
             swarmConfigContext = validConfigs.map(c => {
-                 return `Config (${c.id}): ${c.solution || c.agentResponse || JSON.stringify(c)}`;
+                 return `Config (${c.id}): ${(c as any).solution || c.agentResponse || JSON.stringify(c)}`;
             }).join("\n");
         }
     } catch (e) {

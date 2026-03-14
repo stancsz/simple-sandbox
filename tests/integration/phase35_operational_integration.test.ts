@@ -73,7 +73,26 @@ vi.mock('@modelcontextprotocol/sdk/client/stdio.js', () => {
       // ts is an object map keyed by tool name
       return ts[name];
   };
-  describe("Phase 35 Operational Integration", () => {
+
+vi.mock("fs", async (importOriginal) => {
+    const actual = await importOriginal() as any;
+    return {
+        ...actual,
+        existsSync: vi.fn().mockReturnValue(true),
+        mkdirSync: vi.fn()
+    };
+});
+
+vi.mock("fs/promises", async (importOriginal) => {
+     const actual = await importOriginal() as any;
+     return {
+         ...actual,
+         readFile: vi.fn().mockResolvedValue("# Title\n1. Step 1\nStep 1 description"),
+         readdir: vi.fn().mockResolvedValue(["test_sop.md"]),
+         writeFile: vi.fn()
+     };
+});
+describe("Phase 35 Operational Integration", () => {
     let scheduler: any;
     let sopEngine: any;
 
@@ -126,25 +145,6 @@ vi.mock('@modelcontextprotocol/sdk/client/stdio.js', () => {
         };
 
         // Mock fs functions within SOP Engine context
-        vi.mock("fs", async (importOriginal) => {
-            const actual = await importOriginal() as any;
-            return {
-                ...actual,
-                existsSync: vi.fn().mockReturnValue(true),
-                mkdirSync: vi.fn()
-            };
-        });
-
-        vi.mock("fs/promises", async (importOriginal) => {
-             const actual = await importOriginal() as any;
-             return {
-                 ...actual,
-                 readFile: vi.fn().mockResolvedValue("# Title\n1. Step 1\nStep 1 description"),
-                 readdir: vi.fn().mockResolvedValue(["test_sop.md"]),
-                 writeFile: vi.fn()
-             };
-        });
-
         const executeTool = getTool(sopEngine.server, "sop_execute");
         expect(executeTool).toBeDefined();
 

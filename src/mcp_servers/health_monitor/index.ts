@@ -724,13 +724,13 @@ export async function main() {
             const validPolicies = policies.map(p => ({
                 id: p.id,
                 timestamp: p.timestamp,
-                content: p.solution || p.agentResponse || JSON.stringify(p)
+                content: (p as any).solution || p.agentResponse || JSON.stringify(p)
             }));
 
             const validConfigs = configs.filter(c => c.id && c.id.startsWith("swarm_config:")).map(c => ({
                 id: c.id,
                 timestamp: c.timestamp,
-                content: c.solution || c.agentResponse || JSON.stringify(c)
+                content: (c as any).solution || c.agentResponse || JSON.stringify(c)
             }));
 
             // Calculate a mock correlation or simple stat based on history
