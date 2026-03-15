@@ -2,6 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generateEcosystemAuditReport, readAndFilterLogs, getStartDateFromTimeframe, matchesFocusArea } from '../../src/mcp_servers/ecosystem_auditor/tools/generate_audit_report';
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import { mockStore } from '../../src/brain/episodic.js';
+
+vi.mock('../../src/brain/episodic.js', () => {
+    const mockStore = vi.fn().mockResolvedValue(undefined);
+    const EpisodicMemory = vi.fn();
+    EpisodicMemory.prototype.store = mockStore;
+    return {
+        EpisodicMemory,
+        mockStore
+    };
+});
 
 // Mock the LLM explicitly at the top level
 vi.mock('../../src/llm/index.js', () => {
@@ -80,6 +91,22 @@ describe('ecosystem_auditor_report', () => {
         // If today is after 2026, they might be excluded. To be perfectly deterministic, let's test the LLM result.
         expect(report.summary).toContain('Executive Summary');
         expect(report.summary).toContain('Key Events');
+
+        // Check if report was stored in EpisodicMemory
+        expect(mockStore).toHaveBeenCalledWith(
+            'ecosystem_auditor',
+            'Ecosystem Audit Report for last_7_days (all)',
+            expect.any(String),
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            expect.stringContaining('audit-'),
+            undefined,
+            undefined,
+            'ecosystem_audit_report'
+        );
     });
 
     it('should handle missing log files gracefully', async () => {

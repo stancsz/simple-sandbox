@@ -3,6 +3,7 @@ import { join } from "path";
 import { GenerateEcosystemAuditReportInput } from "../schemas/generate_audit_report.js";
 import { EcosystemAuditReport, EcosystemAuditLogEntry } from "../types.js";
 import { createLLM } from "../../../llm/index.js";
+import { EpisodicMemory } from "../../../brain/episodic.js";
 
 // Helper to determine the start date from the timeframe string
 export function getStartDateFromTimeframe(timeframe: string): Date {
@@ -34,7 +35,7 @@ export function matchesFocusArea(event: EcosystemAuditLogEntry, focus_area: stri
         return type === "morphology_adjustment" || type === "spawn" || type === "merge" || type === "retire" || type === "scale";
     }
 
-    return true; // fallback
+    return false; // fallback
 }
 
 /**
@@ -149,8 +150,31 @@ Generate the comprehensive ecosystem audit report.`;
         }
     }
 
+    const reportId = `audit-${Date.now()}`;
+
+    try {
+        const memory = new EpisodicMemory();
+        await memory.store(
+            "ecosystem_auditor", // taskId
+            `Ecosystem Audit Report for ${input.timeframe} (${focusArea})`, // request
+            JSON.stringify({ report_id: reportId, timeframe: input.timeframe, focus_area: focusArea, summary: summaryMarkdown }), // solution
+            [], // artifacts
+            undefined, // company
+            undefined, // simulation_attempts
+            undefined, // resolved_via_dreaming
+            undefined, // dreaming_outcomes
+            reportId, // id
+            undefined, // tokens
+            undefined, // duration
+            "ecosystem_audit_report" // type
+        );
+        console.log(`Successfully stored audit report ${reportId} in EpisodicMemory for trend analysis.`);
+    } catch (e: any) {
+        console.warn(`Failed to store audit report in EpisodicMemory: ${e.message}`);
+    }
+
     return {
-        report_id: `audit-${Date.now()}`,
+        report_id: reportId,
         timeframe: input.timeframe,
         focus_area: focusArea,
         summary: summaryMarkdown,
