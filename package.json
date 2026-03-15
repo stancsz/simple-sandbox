@@ -23,6 +23,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:stress": "vitest run tests/stress/",
+    "test:showcase:biosphere": "vitest run tests/integration/digital_biosphere_showcase.test.ts",
     "lint": "eslint src/ tests/",
     "format": "prettier --write src/ tests/"
   },

@@ -1,0 +1,41 @@
+{
+  "name": "Acme Marketing Platform",
+  "tasks": [
+    {
+      "task_id": "task-frontend-1",
+      "description": "Build the main landing page using Vue.js and Tailwind CSS.",
+      "dependencies": [],
+      "required_capabilities": ["frontend"]
+    },
+    {
+      "task_id": "task-frontend-2",
+      "description": "Implement the blog UI components and routing.",
+      "dependencies": ["task-frontend-1"],
+      "required_capabilities": ["frontend"]
+    },
+    {
+      "task_id": "task-backend-1",
+      "description": "Develop the REST API for blog posts and analytics.",
+      "dependencies": [],
+      "required_capabilities": ["backend"]
+    },
+    {
+      "task_id": "task-backend-2",
+      "description": "Set up PostgreSQL database schema for the application.",
+      "dependencies": ["task-backend-1"],
+      "required_capabilities": ["backend"]
+    },
+    {
+      "task_id": "task-devops-1",
+      "description": "Configure Docker containers for the frontend and backend.",
+      "dependencies": ["task-frontend-1", "task-backend-1"],
+      "required_capabilities": ["devops"]
+    },
+    {
+      "task_id": "task-devops-2",
+      "description": "Set up CI/CD pipelines and deployment manifests.",
+      "dependencies": ["task-devops-1"],
+      "required_capabilities": ["devops"]
+    }
+  ]
+}
