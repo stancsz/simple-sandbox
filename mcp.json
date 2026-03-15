@@ -142,6 +142,13 @@
         "src/mcp_servers/validation_metrics/index.ts"
       ]
     },
+    "hyper_scaling_engine": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "src/mcp_servers/hyper_scaling_engine/index.ts"
+      ]
+    },
     "ecosystem_auditor": {
       "command": "npx",
       "args": [
