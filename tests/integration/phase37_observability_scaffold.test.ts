@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generateEcosystemAuditReport } from '../../src/mcp_servers/ecosystem_auditor/tools/generate_audit_report.js';
-import { generateEcosystemAuditReportSchema } from '../../src/mcp_servers/ecosystem_auditor/schemas/generate_audit_report.js';
+import { generateEcosystemAuditReport, generateEcosystemAuditReportSchema } from '../../src/mcp_servers/ecosystem_auditor/tools.js';
 import { server } from '../../src/mcp_servers/ecosystem_auditor/index.js';
 
 // Mock the LLM explicitly at the top level to match the new tool behavior
