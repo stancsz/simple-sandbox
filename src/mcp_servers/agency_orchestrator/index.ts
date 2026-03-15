@@ -9,7 +9,8 @@ import {
     applyEcosystemInsights,
     spawnChildAgency,
     mergeChildAgencies,
-    retireChildAgency
+    retireChildAgency,
+    getAgencyStatus
 } from "./tools/index.js";
 import { EpisodicMemory } from "../../brain/episodic.js";
 
@@ -145,6 +146,20 @@ export class AgencyOrchestratorServer {
       async ({ agency_id }: { agency_id: string }) => {
         try {
             const result = await retireChildAgency(agency_id, this.memory);
+            return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        } catch (error: any) {
+            return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
+        }
+      }
+    );
+
+    this.server.tool(
+      "get_agency_status",
+      "Retrieves the status of all child agencies within the ecosystem.",
+      {},
+      async () => {
+        try {
+            const result = await getAgencyStatus(this.memory);
             return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         } catch (error: any) {
             return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };

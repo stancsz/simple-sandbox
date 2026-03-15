@@ -5,6 +5,7 @@
       <div class="nav-controls">
           <button @click="currentView = 'dashboard'" :class="{ active: currentView === 'dashboard' }">Dashboard</button>
           <button @click="currentView = 'intelligence'" :class="{ active: currentView === 'intelligence' }">Intelligence</button>
+          <button @click="currentView = 'ecosystem'" :class="{ active: currentView === 'ecosystem' }">Ecosystem</button>
       </div>
       <div id="status-indicator">● Connected</div>
     </header>
@@ -16,9 +17,10 @@
 <script>
 import DashboardView from './views/DashboardView.vue'
 import IntelligenceView from './views/IntelligenceView.vue'
+import EcosystemView from './views/EcosystemView.vue'
 
 export default {
-  components: { DashboardView, IntelligenceView },
+  components: { DashboardView, IntelligenceView, EcosystemView },
   data() {
     return {
       currentView: 'dashboard'
@@ -26,7 +28,9 @@ export default {
   },
   computed: {
     currentViewComponent() {
-      return this.currentView === 'dashboard' ? 'DashboardView' : 'IntelligenceView'
+      if (this.currentView === 'dashboard') return 'DashboardView';
+      if (this.currentView === 'ecosystem') return 'EcosystemView';
+      return 'IntelligenceView';
     }
   }
 }

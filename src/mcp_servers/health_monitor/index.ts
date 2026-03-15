@@ -862,6 +862,86 @@ export async function main() {
         }
     });
 
+    app.get("/api/dashboard/topology", async (req, res) => {
+        try {
+            const orchSrc = join(process.cwd(), "src", "mcp_servers", "agency_orchestrator", "index.ts");
+            const orchDist = join(process.cwd(), "dist", "mcp_servers", "agency_orchestrator", "index.js");
+            let orchCmd = "node";
+            let orchArgs = [orchDist];
+            if (existsSync(orchSrc) && !existsSync(orchDist)) {
+                orchCmd = "npx";
+                orchArgs = ["tsx", orchSrc];
+            }
+
+            const orchTransport = new StdioClientTransport({ command: orchCmd, args: orchArgs });
+            const orchClient = new Client({ name: "health-orch-client", version: "1.0.0" }, { capabilities: {} });
+            await orchClient.connect(orchTransport);
+
+            let agencies: any[] = [];
+            try {
+                const statusResult: any = await orchClient.callTool({
+                    name: "get_agency_status",
+                    arguments: {}
+                });
+                if (statusResult && statusResult.content && statusResult.content.length > 0) {
+                    agencies = JSON.parse(statusResult.content[0].text);
+                }
+            } catch (e: any) {
+                console.warn("Failed to get agency status for topology:", e.message);
+            } finally {
+                await orchClient.close();
+            }
+
+            // Build hierarchical graph
+            const topology = {
+                id: "root",
+                role: "agency_orchestrator",
+                status: "active",
+                children: agencies.map(a => ({
+                    id: a.agency_id,
+                    role: a.role,
+                    status: a.status,
+                    resource_limit: a.resource_limit,
+                    merged_into: a.merged_into
+                }))
+            };
+
+            res.json(topology);
+        } catch (e: any) {
+            res.status(500).json({ error: e.message });
+        }
+    });
+
+    app.get("/api/dashboard/events", async (req, res) => {
+        try {
+            const agentDir = process.env.JULES_AGENT_DIR || join(process.cwd(), '.agent');
+            const logDir = join(agentDir, 'ecosystem_logs');
+            let events: any[] = [];
+
+
+            if (existsSync(logDir)) {
+                const fs = await import("fs/promises");
+                const dirFiles = await fs.readdir(logDir);
+                const jsonlFiles = dirFiles.filter(f => f.endsWith('.jsonl')).map(f => join(logDir, f));
+
+                for (const file of jsonlFiles) {
+                     const data = await readNdjson(file);
+                     events.push(...data);
+                }
+            }
+
+            // Sort by timestamp descending
+            events.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
+
+            // Limit to last 50 events
+            const recentEvents = events.slice(0, 50);
+
+            res.json({ events: recentEvents });
+        } catch (e: any) {
+            res.status(500).json({ error: e.message });
+        }
+    });
+
     app.get("/api/dashboard/ecosystem-audit", async (req, res) => {
         if (!auditorClientGlobal) {
             return res.status(503).json({ error: "Ecosystem Auditor service unavailable" });
