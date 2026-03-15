@@ -26,6 +26,20 @@ Integrates with the `PolicyEngine` to ensure the requested number of swarms does
 ### `simulate_scaling_scenario`
 A forecasting tool that projects ecosystem costs, required swarms, and potential system health issues for hypothetical scaling targets (e.g., 200, 500 clients).
 
+## Running the Production Simulation
+
+To validate the Hyper-Scaling Engine's capabilities under load, you can run the production simulation script. This script mocks demand spikes across hundreds of simulated clients and validates that cost optimization and budget enforcement trigger correctly.
+
+Run the full simulation:
+```bash
+npx tsx scripts/validate_hyper_scaling_production.ts
+```
+
+Run a quick smoke test (useful for CI/CD):
+```bash
+npx tsx scripts/validate_hyper_scaling_production.ts --smoke
+```
+
 ## Backward Compatibility
 
 To maintain compatibility with existing workflows, the Hyper-Scaling Engine's tools are also exported and registered within the `business_ops` MCP Server. This allows orchestrators and planners already using `business_ops` to leverage the new scaling capabilities seamlessly.
