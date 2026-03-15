@@ -37,6 +37,7 @@ import { registerServicePackagerTools } from "../commerce/service_packager.js";
 import { registerCapacityPlanningTools } from "./tools/capacity_planning.js";
 import { registerForecastingIntegrationTools } from "./tools/forecasting_integration.js";
 import { registerExecutiveActionTools } from "./tools/executive_actions.js";
+import { registerHyperScalingTools } from "../hyper_scaling_engine/tools.js";
 
 // Load secrets from .env.agent
 const envPath = join(process.cwd(), ".env.agent");
@@ -84,6 +85,7 @@ registerServicePackagerTools(server);
 registerCapacityPlanningTools(server);
 registerForecastingIntegrationTools(server);
 registerExecutiveActionTools(server);
+registerHyperScalingTools(server);
 
 // Start Server
 async function main() {
