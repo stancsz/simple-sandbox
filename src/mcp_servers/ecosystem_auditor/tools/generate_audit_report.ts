@@ -155,12 +155,18 @@ Generate the comprehensive ecosystem audit report.`;
     try {
         const memory = new EpisodicMemory();
         await memory.store(
-            "ecosystem_auditor",
-            `Ecosystem Audit Report for ${input.timeframe} (${focusArea})`,
-            JSON.stringify({ report_id: reportId, timeframe: input.timeframe, focus_area: focusArea, summary: summaryMarkdown }),
-            "ecosystem_audit_report",
-            summaryMarkdown,
-            ["ecosystem", "audit", "report", input.timeframe, focusArea]
+            "ecosystem_auditor", // taskId
+            `Ecosystem Audit Report for ${input.timeframe} (${focusArea})`, // request
+            JSON.stringify({ report_id: reportId, timeframe: input.timeframe, focus_area: focusArea, summary: summaryMarkdown }), // solution
+            [], // artifacts
+            undefined, // company
+            undefined, // simulation_attempts
+            undefined, // resolved_via_dreaming
+            undefined, // dreaming_outcomes
+            reportId, // id
+            undefined, // tokens
+            undefined, // duration
+            "ecosystem_audit_report" // type
         );
         console.log(`Successfully stored audit report ${reportId} in EpisodicMemory for trend analysis.`);
     } catch (e: any) {

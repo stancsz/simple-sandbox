@@ -97,9 +97,15 @@ describe('ecosystem_auditor_report', () => {
             'ecosystem_auditor',
             'Ecosystem Audit Report for last_7_days (all)',
             expect.any(String),
-            'ecosystem_audit_report',
-            expect.stringContaining('Executive Summary'),
-            expect.arrayContaining(['ecosystem', 'audit', 'report', 'last_7_days', 'all'])
+            [],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            expect.stringContaining('audit-'),
+            undefined,
+            undefined,
+            'ecosystem_audit_report'
         );
     });
 
