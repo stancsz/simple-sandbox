@@ -85,6 +85,12 @@ The root agency dynamically restructures the agency ecosystem based on meta-lear
     - **Step 3**: The Agency Orchestrator executes these changes dynamically.
 - **Result**: A self-improving collective that adapts to changing conditions, demonstrated via [demos/phase36_ecosystem_evolution_showcase.ts](../demos/phase36_ecosystem_evolution_showcase.ts).
 
+### 11. **Advanced Ecosystem Demonstration (Phase 38)**
+The **Digital Biosphere Showcase** is the culmination of Phases 32–37, demonstrating a fully autonomous, self-evolving agency ecosystem.
+- **Scenario**: A complex project requires multiple specialized agencies (Frontend, Backend, DevOps).
+- **Action**: The root agency orchestrates the project, applies meta-learning insights predictively, and dynamically restructures the topology (e.g., merging agencies) based on real-time simulated metrics.
+- **Result**: A comprehensive, production-grade demonstration providing full observability via the Health Monitor dashboard. Run the showcase locally via `npx tsx demos/digital_biosphere_showcase/run_showcase.ts` and view the docs at [demos/digital_biosphere_showcase/README.md](../demos/digital_biosphere_showcase/README.md).
+
 ---
 
 ## 🚀 Deployment Instructions
