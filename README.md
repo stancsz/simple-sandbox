@@ -33,6 +33,7 @@ Ready to build your digital agency?
 
 ### Advanced Guides
 Ready for production? Check out our real-world deployment playbooks:
+- **[Production Deployment Guide](docs/PRODUCTION_DEPLOYMENT_GUIDE.md)**: The authoritative manual for deploying and managing the Simple-CLI digital agency ecosystem in a production environment.
 - **[Startup MVP Playbook](docs/deployment/startup_mvp.md)**: From zero to k8s in a weekend.
 - **[Enterprise Migration Playbook](docs/deployment/ENTERPRISE_MIGRATION_PLAYBOOK.md)**: Modernize legacy monoliths with zero downtime.
 
