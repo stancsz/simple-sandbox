@@ -1,0 +1,11 @@
+{"timestamp":"2026-03-15T14:07:25.601Z","agent":"llm","metric":"llm_cache_miss","value":1,"tags":{"model":"deepseek-reasoner","provider":"deepseek"}}
+{"timestamp":"2026-03-15T14:07:50.568Z","agent":"llm","metric":"llm_latency","value":24988,"tags":{"model":"deepseek-reasoner","provider":"deepseek"}}
+{"timestamp":"2026-03-15T14:07:50.568Z","agent":"llm","metric":"llm_tokens_total","value":682,"tags":{"model":"deepseek-reasoner","provider":"deepseek"}}
+{"timestamp":"2026-03-15T14:07:50.568Z","agent":"llm","metric":"llm_tokens_prompt","value":195,"tags":{"model":"deepseek-reasoner","provider":"deepseek"}}
+{"timestamp":"2026-03-15T14:07:50.568Z","agent":"llm","metric":"llm_tokens_completion","value":487,"tags":{"model":"deepseek-reasoner","provider":"deepseek"}}
+{"timestamp":"2026-03-15T14:07:51.643Z","agent":"llm","metric":"llm_cache_miss","value":1,"tags":{"model":"deepseek-reasoner","provider":"deepseek"}}
+{"timestamp":"2026-03-15T14:09:12.315Z","agent":"llm","metric":"llm_latency","value":80670,"tags":{"model":"deepseek-reasoner","provider":"deepseek"}}
+{"timestamp":"2026-03-15T14:09:12.315Z","agent":"llm","metric":"llm_tokens_total","value":1968,"tags":{"model":"deepseek-reasoner","provider":"deepseek"}}
+{"timestamp":"2026-03-15T14:09:12.315Z","agent":"llm","metric":"llm_tokens_prompt","value":194,"tags":{"model":"deepseek-reasoner","provider":"deepseek"}}
+{"timestamp":"2026-03-15T14:09:12.315Z","agent":"llm","metric":"llm_tokens_completion","value":1774,"tags":{"model":"deepseek-reasoner","provider":"deepseek"}}
+{"timestamp":"2026-03-15T14:09:13.379Z","agent":"llm","metric":"llm_cache_miss","value":1,"tags":{"model":"deepseek-reasoner","provider":"deepseek"}}

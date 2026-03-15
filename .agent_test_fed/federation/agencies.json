@@ -1,0 +1,37 @@
+{
+  "agency_alpha": {
+    "agency_id": "agency_alpha",
+    "endpoint": "http://127.0.0.1:40221",
+    "capabilities": [
+      {
+        "name": "legal_review",
+        "description": "Review legal documents",
+        "version": "1.0.0"
+      }
+    ],
+    "status": "active",
+    "supported_protocols": [
+      "mcp/1.0"
+    ]
+  },
+  "agency_beta": {
+    "agency_id": "agency_beta",
+    "endpoint": "http://127.0.0.1:40221",
+    "capabilities": [
+      {
+        "name": "code_review",
+        "description": "Review source code",
+        "version": "1.0.0"
+      },
+      {
+        "name": "security_audit",
+        "description": "Audit security architecture",
+        "version": "1.0.0"
+      }
+    ],
+    "status": "inactive",
+    "supported_protocols": [
+      "mcp/1.0"
+    ]
+  }
+}

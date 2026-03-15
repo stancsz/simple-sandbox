@@ -64,3 +64,19 @@ Phase 30 introduces an autonomous strategic decision loop, elevating the system 
 
 ### Integration with the 4 Pillars
 - **Recursive Optimization**: By combining Time-Series Forecasting (Phase 29) with the Strategic Decision Engine (Phase 30), the agent continuously aligns its resource allocation, pricing models, and operational footprint with predicted market realties, reducing latency in C-suite decision-making to near-zero.
+
+## Hyper-Scaling Engine Architecture (Phase 38)
+Phase 38 introduces the `hyper_scaling_engine` MCP server, designed to manage hundreds of concurrent client swarms, optimize global LLM routing costs, and enforce strict budget policies at the ecosystem level.
+
+### Core Components
+1. **Demand Evaluation (`evaluate_massive_demand`)**:
+   - Integrates with Linear (issue tracking), Brain (client activity), and Health Monitor (system metrics).
+   - Calculates the required number of swarms based on projected task volume and bottleneck risks.
+2. **Global Cost Optimization (`optimize_global_costs`)**:
+   - Fetches budget and spend data from the Business Ops MCP.
+   - Dynamically routes routine tasks to cheaper models (e.g., `gpt-4o-mini`, `gemini-1.5-flash`) based on total active swarms and budget consumption.
+3. **Resource Budget Enforcement (`enforce_resource_budget`)**:
+   - Uses the latest `CorporatePolicy` from the `fleet_manager` to cap maximum concurrent swarms.
+   - Prevents runaway scaling events during massive demand spikes.
+4. **Scenario Simulation (`simulate_scaling_scenario`)**:
+   - Projects cost and system health for hypothetical numbers of clients to aid strategic capacity planning.

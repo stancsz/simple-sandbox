@@ -1,0 +1,17 @@
+{
+  "meta_agency_alpha": {
+    "agency_id": "meta_agency_alpha",
+    "endpoint": "http://127.0.0.1:34567",
+    "capabilities": [
+      {
+        "name": "analytics",
+        "description": "Data analytics",
+        "version": "1.0"
+      }
+    ],
+    "status": "active",
+    "supported_protocols": [
+      "mcp/1.0"
+    ]
+  }
+}
