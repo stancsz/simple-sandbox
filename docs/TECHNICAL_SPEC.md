@@ -3,6 +3,10 @@
 ## Core Architecture
 The system consists of independent MCP (Model Context Protocol) servers communicating with an Orchestrator/Daemon loop. Each server isolates domains (e.g., Brain, HR, Scheduler, Business Ops).
 
+At the macro level, the architecture functions as a **Digital Biosphere**—a multi-agency ecosystem. A "root agency" operates autonomously and can spawn, merge, or retire "child agencies" through the `Agency Orchestrator MCP` to adapt to workload demands dynamically.
+
+This ecosystem is supported by a **Hyper-Scaling Engine** that manages high-scale orchestration, enforces cost budgets, and dynamically allocates compute resources. Deployments leverage **Multi-Region High Availability** (via Kubernetes) with automated failover and geographic load balancing to ensure continuous operational resilience against regional outages.
+
 ## LLM System & Batching
 The LLM engine (`src/llm.ts`) provides unified provider routing with an integrated caching layer (`llm_cache_hit`) and persona injection.
 
@@ -39,7 +43,19 @@ Phase 29 introduces a dedicated `forecasting` MCP server designed to ingest hist
 - **Brain Integration**: The `compile_to_symbolic` tool allows the HR Loop or Supervisor to permanently "bake" highly successful patterns into zero-token graphs.
 - **Adaptive Router**: The `AdaptiveRouter` intercepts `generate` calls. If a compiled `TaskGraph` matches the intent, it executes deterministically, logging an `llm_requests_avoided` metric and reducing token costs by >40% for routine operations.
 
-## 20. Production Ecosystem Observability & Governance (Phase 37)
+## 20. Ecosystem Intelligence & Meta-Learning (Phases 34 & 35)
+Phases 34 and 35 introduce the capability for the ecosystem to learn from its collective experiences and apply these insights globally to improve operational efficiency and decision-making.
+
+### Core Components
+1. **analyze_ecosystem_patterns (Brain MCP)**:
+   - Queries historical execution data and metrics across the entire agency ecosystem.
+   - Synthesizes findings using the LLM to identify inefficiencies, successful configurations, and emerging systemic trends.
+   - Outputs a formalized `ecosystem_policy` detailing recommended parameter adjustments (e.g., optimal concurrency, token thresholds).
+2. **apply_ecosystem_insights (Agency Orchestrator MCP)**:
+   - Retrieves the latest `ecosystem_policy` from the Brain's episodic memory.
+   - Parses the recommended parameter changes and dynamically updates the configurations (e.g., swarm budgets, timeouts) of targeted or all child agencies.
+
+## 21. Production Ecosystem Observability & Governance (Phase 37)
 Phase 37 introduces the `EcosystemAuditor` MCP and enhances the Brain MCP to synthesize cross-agency communications, policy changes, and morphology adjustments into actionable audit reports.
 
 ### Core Components
