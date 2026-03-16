@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-03-16T04:01:02.214Z",
+  "timestamp": "2026-03-16T04:20:47.551Z",
   "results": [
     {
       "task": "integration_speed",
       "framework": "Simple-CLI",
-      "duration_ms": 89,
+      "duration_ms": 69,
       "success": false,
       "details": "LLM generation failed.",
       "tokens": 0
@@ -12,14 +12,14 @@
     {
       "task": "code_editing",
       "framework": "Direct Usage (Aider-like)",
-      "duration_ms": 158,
+      "duration_ms": 156,
       "tokens": 5100,
       "cost": 0.051
     },
     {
       "task": "code_editing",
       "framework": "Simple-CLI",
-      "duration_ms": 263,
+      "duration_ms": 262,
       "tokens": 522,
       "cost": 0.005220000000000001
     },
@@ -33,7 +33,7 @@
     {
       "task": "research",
       "framework": "Simple-CLI",
-      "duration_ms": 302,
+      "duration_ms": 303,
       "tokens": 40,
       "cost": 0.0004
     },
