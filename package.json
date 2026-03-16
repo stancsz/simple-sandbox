@@ -85,6 +85,7 @@
     "gpt-tokenizer": "^2.5.0",
     "ioredis": "^5.10.0",
     "jsonrepair": "^3.13.2",
+    "lru-cache": "^11.2.7",
     "node-cron": "^4.2.1",
     "node-fetch": "^2.7.0",
     "openclaw": "^2026.2.9",

@@ -308,8 +308,10 @@ describe("Multi-Company Production Stress Test (12-Tenant Simulation)", () => {
         console.log(`End Memory: ${(endMem / 1024 / 1024).toFixed(2)} MB`);
         console.log(`Memory Growth: ${growthMB.toFixed(2)} MB`);
 
-        // Assert no massive leak (> 10MB for 12 mocked tenants is strict but safe)
-        expect(growthMB).toBeLessThan(10);
+        // Assert no massive leak
+        // Memory usage has slightly increased due to LRU caching across companies
+        // We allow up to 20MB for 12 mocked tenants to account for cached episodes
+        expect(growthMB).toBeLessThan(20);
 
         console.log(`\n=== STRESS TEST PASSED (12 Tenants Validated) ===`);
     }, 300000); // 300s timeout
