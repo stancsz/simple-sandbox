@@ -4,7 +4,7 @@ import { access, mkdir, rm, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { pipeline } from 'stream/promises';
 import { parse } from 'dotenv';
-import tar from 'tar';
+import * as tar from 'tar';
 import { getXeroClient, getTenantId } from '../business_ops/xero_tools.js';
 
 // Configuration
