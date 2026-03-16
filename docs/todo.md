@@ -289,63 +289,13 @@
     - [x] Create SOP (`sops/client_offboarding_workflow.md`).
     - [x] Validation: `tests/integration/client_offboarding_validation.test.ts`.
 
-## Phase 23: Autonomous Agency Governance & Meta-Orchestration
-- [x] **Swarm Fleet Management**: `get_fleet_status`, `evaluate_fleet_demand`, `balance_fleet_resources`.
-- [x] **Predictive Client Health**: `analyze_client_health`, `predict_retention_risk`, `trigger_preemptive_intervention`.
-- [x] **HR Loop & Dreaming Enhancement**: Cross-swarm pattern analysis & SOP generation.
-- [x] **Agency Dashboard**: Unified dashboard for Swarm Status, Financial KPIs, and System Health.
-- [x] **Production Load Simulation**: Validated 10+ concurrent swarms via `scripts/simulate_production_load.ts`.
+## Post-Phase 38: Maintenance & Enhancement (Planned)
 
-## Phase 24: Self-Optimizing Economic Engine
-*Status: Completed*
-*Current Focus: Autonomous Business Optimization*
-*Validation: ✅ Fully validated via quarterly simulation test.*
-- [x] **Performance Analytics**: Implement `analyze_performance_metrics` tool.
-- [x] **Pricing Optimization**: Create `optimize_pricing_strategy` tool.
-- [x] **Service Adjustment**: Implement `adjust_service_offerings` tool.
-- [x] **Resource Allocation**: Add `allocate_resources_optimally` tool.
-- [x] **Market Analysis**: Develop `market_analysis` tools.
-- [x] **Validation**: End-to-end simulation of the quarterly optimization cycle.
-    - ✅ Validated full quarterly optimization cycle via `tests/integration/economic_engine_quarterly_simulation.test.ts`.
+**Goal:** Ongoing system health, capability tuning, and technical debt resolution for the Digital Biosphere.
 
-## Phase 25: Autonomous Corporate Consciousness (✅ Completed)
-*Status: Completed*
-- [x] **Corporate Memory**: `read_strategy`, `propose_strategic_pivot`.
-- [x] **Strategic Horizon Scanner**: `scan_strategic_horizon` tool.
-- [x] **Federated Policy Engine**: `update_operating_policy`, `get_active_policy`, `rollback_operating_policy` tools.
-    - ✅ Implemented policy engine with versioning and validation.
-    - ✅ Validated via `tests/integration/policy_engine_validation.test.ts`.
-- [x] **Autonomous Board Meeting**: `convene_board_meeting`.
-    - ✅ Validated via `tests/integration/phase25_validation.test.ts` demonstrating the full cycle from horizon scanning to policy propagation.
-
-## Phase 26: Autonomous Market Expansion (✅ Completed)
-- [x] **Intelligent Proposal Generation**: `generate_client_proposal` tool in `business_ops` MCP server.
-    - ✅ Synthesizes Corporate Strategy, past proposals (RAG), and Policy Engine parameters using LLM.
-    - ✅ Uses a professional template `sops/proposal_template.md`.
-    - ✅ Validated via `tests/integration/phase26_growth_validation.test.ts` and `tests/integration/phase26_revenue_validation.test.ts`.
-
-## Phase 27: Enterprise Resilience & Anti-Fragility (✅ Completed)
-- [x] **Disaster Recovery System**: Implement automated, encrypted backups for the Brain (Vector/Graph DB), Company Contexts, and financial data (Xero). Design a recovery procedure that can restore agency state within 1 hour.
-- [x] **Security Hardening MCP**: Create an MCP server (`security_monitor`) that scans for vulnerabilities in dependencies, monitors anomalous API activity, and applies automated patches (via PRs) for critical vulnerabilities.
-- [x] **Market Shock Absorption**: Enhance the Strategic Horizon Scanner to detect economic downturns or sudden opportunities (via market data APIs) and trigger pre-defined contingency plans (e.g., adjust pricing, pause non-critical swarms).
-- [x] **Multi-Region High Availability**: Extend the Kubernetes Helm chart to support multi-region deployment (e.g., AWS us-east-1, eu-west-1) with automated failover and geographic load balancing.
-- [x] **Validation**: Simulate a regional outage and verify automated recovery; run penetration testing via the security MCP; simulate full data loss to verify 1-hour DR recovery SLA. Validated multi-region failover on October 25, 2023.
-
-## Phase 38: Production Scalability & Beyond (✅ Completed)
-- [x] **Engine**: Implement Core Hyper-Scaling Engine MCP server.
-- [x] **Documentation**: Create Production Deployment Guide (`docs/PRODUCTION_DEPLOYMENT_GUIDE.md`).
-
-## Phase 28: Operational Efficiency & Cost Optimization (✅ Completed)
-- [x] **LLM Call Caching**: Implement file-based and Redis caching backends.
-- [x] **Batch Prompt Consolidation**: Bundle routine tasks with `BatchExecutor`.
-- [x] **Adaptive Model Routing**: Dynamically route LLM requests based on complexity.
-- [x] **Validation**: Validate efficiency improvements and cost reductions.
-
-## Phase 29: Advanced Planning & Forecasting (✅ Completed)
-- [x] Time-Series Forecasting: Implement MCP server with `record_metric` and `forecast_metric` using `simple-statistics` and `better-sqlite3`. Integrated with `business_ops` for `forecast_resource_demand`.
-- [x] **Time-Series Forecasting**: Build models to predict resource consumption. (See PR #640)
-- [x] **Capacity Planning**: Automate token budget and node scaling. (See PR #640)
-- [x] **Demand Prediction**: Integrate `simple-statistics` for dynamic financial modeling. (See PR #640)
-- [x] **Validation Metrics**: Demonstrate accurate forecasting based on historical simulation. Implemented MAE, RMSE, MAPE metrics and decision quality simulation. Validated via `tests/integration/forecasting_validation.test.ts` (MAPE < 15%) on Date: [Insert current date].
-- [x] **Brain & Business Ops Integration**: Added `store_forecast` to save strategic forecasts to the Brain. Updated `allocate_resources_optimally` to use recent forecasts, and introduced `apply_forecast_to_strategy` to recursively adjust Corporate Strategy based on predicted metrics.
+### Maintenance Actions
+- [ ] **Dependency Audits**: Update Node packages, fix security vulnerabilities, and upgrade major frameworks (e.g., Vite, Vue).
+- [ ] **Performance Tuning**: Profile vector search operations in LanceDB for multi-tenant scalability optimizations.
+- [ ] **Bug Fixes**: Resolve minor issues in UI dashboard and fix edge cases in multi-region Kubernetes deployments.
+- [ ] **Code Refactoring**: Remove deprecated files and consolidate duplicated logic in MCP server utilities.
 
