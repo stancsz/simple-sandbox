@@ -5,19 +5,15 @@ import { join } from "path";
 
 // Mock the EpisodicMemory to avoid real DB connections
 vi.mock("../../src/brain/episodic.js", () => {
-    return {
-        EpisodicMemory: vi.fn().mockImplementation(() => {
-            return {
-                recall: vi.fn().mockResolvedValue([
-                    { id: "client_activity_1", type: "client_activity", timestamp: Date.now(), metadata: {} },
-                    { id: "client_activity_2", type: "client_activity", timestamp: Date.now(), metadata: {} },
-                    { id: "client_activity_3", type: "client_activity", timestamp: Date.now(), metadata: {} },
-                    { id: "client_activity_4", type: "client_activity", timestamp: Date.now(), metadata: {} },
-                    { id: "client_activity_5", type: "client_activity", timestamp: Date.now(), metadata: {} }
-                ])
-            };
-        })
-    };
+    const EpisodicMemoryMock = vi.fn();
+    EpisodicMemoryMock.prototype.recall = vi.fn().mockResolvedValue([
+        { id: "client_activity_1", type: "client_activity", timestamp: Date.now(), metadata: {} },
+        { id: "client_activity_2", type: "client_activity", timestamp: Date.now(), metadata: {} },
+        { id: "client_activity_3", type: "client_activity", timestamp: Date.now(), metadata: {} },
+        { id: "client_activity_4", type: "client_activity", timestamp: Date.now(), metadata: {} },
+        { id: "client_activity_5", type: "client_activity", timestamp: Date.now(), metadata: {} }
+    ]);
+    return { EpisodicMemory: EpisodicMemoryMock };
 });
 
 // Mock getLatestPolicy from fleet_manager
