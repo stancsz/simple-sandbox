@@ -24,3 +24,18 @@ To add a new secret:
 ## Sandboxing
 
 (Future implementation details for containerized sandboxing can be added here.)
+
+## Dependency Audits
+
+Dependencies are regularly audited for security vulnerabilities.
+
+### Audit Policy
+- Node.js dependencies in the root project (`package.json`) and standalone applications (e.g., `scripts/dashboard/package.json`) are checked.
+- We run `npm audit` and `npm outdated` to identify required updates.
+- Critical and high-severity CVEs are addressed immediately via `npm audit fix` or manual major version upgrades.
+- After every dependency update, the entire test suite (`npm test`) must be executed to ensure backward compatibility and prevent regressions.
+
+### Recent Audits
+* **March 16, 2026**: Conducted a comprehensive dependency audit.
+  * `scripts/dashboard`: Upgraded Vite to v8, Vue to v3.5, and Chart.js to v4.5. Addressed critical vulnerabilities in `esbuild` by updating Vite.
+  * Root Project: Addressed vulnerabilities in `vitest`, `stagehand` and other dependencies. Remaining moderate/low issues involving older dependencies were isolated or logged for future refactoring.
