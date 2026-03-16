@@ -1,9 +1,11 @@
 import * as lancedb from "@lancedb/lancedb";
 import { join, dirname } from "path";
 import { mkdirSync, existsSync } from "fs";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash } from "crypto";
 import { createLLM } from "../llm.js";
 import { LanceConnector } from "../mcp_servers/brain/lance_connector.js";
+import { loadConfig, Config } from "../config.js";
+import { LRUCache } from "lru-cache";
 
 export interface LedgerEntry {
   id: string;
@@ -43,6 +45,8 @@ export class EpisodicMemory {
   private llm: ReturnType<typeof createLLM>;
   private defaultTableName = "episodic_memories";
   private ledgerTableName = "ledger_entries";
+  private cache: LRUCache<string, PastEpisode[]> | null = null;
+  private config: Config | null = null;
 
   constructor(baseDir: string = process.cwd(), llm?: ReturnType<typeof createLLM>) {
     this.baseDir = baseDir;
@@ -50,6 +54,17 @@ export class EpisodicMemory {
   }
 
   async init() {
+    this.config = await loadConfig(this.baseDir);
+    // Determine if cache should be enabled based on config, default to true for performance
+    const cacheEnabled = this.config?.llmCache?.enabled !== false;
+
+    if (cacheEnabled) {
+      this.cache = new LRUCache<string, PastEpisode[]>({
+        max: 500, // Maximum number of items
+        ttl: this.config?.llmCache?.ttl || 1000 * 60 * 60, // Default 1 hour TTL
+      });
+    }
+
     // Initialize default connector
     await this.getConnector();
   }
@@ -174,6 +189,10 @@ export class EpisodicMemory {
           await table.add([data as any]);
         }
     });
+
+    if (this.cache) {
+      this.cache.clear();
+    }
   }
 
   async delete(id: string, company?: string): Promise<void> {
@@ -193,11 +212,24 @@ export class EpisodicMemory {
   }
 
   async recall(query: string, limit: number = 3, company?: string, type?: string): Promise<PastEpisode[]> {
-    const table = await this.getTable(company);
-    if (!table) return [];
+    let cacheKey = "";
 
     const embedding = await this.getEmbedding(query);
     if (!embedding) return [];
+
+    if (this.cache) {
+      // Hash the embedding for the cache key, along with limit, company and type
+      const hash = createHash("sha256").update(JSON.stringify(embedding)).digest("hex");
+      cacheKey = `${hash}_${limit}_${company || "default"}_${type || "all"}`;
+
+      const cachedResults = this.cache.get(cacheKey);
+      if (cachedResults) {
+        return cachedResults;
+      }
+    }
+
+    const table = await this.getTable(company);
+    if (!table) return [];
 
     let search = table.search(embedding);
     if (type) {
@@ -210,7 +242,13 @@ export class EpisodicMemory {
       .limit(limit)
       .toArray();
 
-    return results as unknown as PastEpisode[];
+    const finalResults = results as unknown as PastEpisode[];
+
+    if (this.cache && cacheKey) {
+      this.cache.set(cacheKey, finalResults);
+    }
+
+    return finalResults;
   }
 
   async getRecentEpisodes(company?: string, limit: number = 100): Promise<PastEpisode[]> {
@@ -253,6 +291,11 @@ export class EpisodicMemory {
           await table.add([dataWithVector as any]);
         }
     });
+
+    // Invalidate the cache when new memories are stored
+    if (this.cache) {
+       this.cache.clear(); // We clear all to ensure consistency, alternatively could just clear specific company prefixes if keys were structured differently. For now, clear all is safest.
+    }
   }
 
   async getLedgerEntries(company?: string): Promise<LedgerEntry[]> {
