@@ -72,7 +72,7 @@ services:
 
   # PostgreSQL Database
   dify-db:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     restart: always
     environment:
       POSTGRES_DB: dify
@@ -86,7 +86,7 @@ services:
 
   # Redis Cache
   dify-redis:
-    image: redis:6-alpine
+    image: redis:7-alpine
     restart: always
     volumes:
       - dify_redis:/data

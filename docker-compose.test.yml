@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   skyvern-db:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     restart: always
     environment:
       POSTGRES_DB: skyvern
@@ -17,7 +17,7 @@ services:
       retries: 5
 
   skyvern-redis:
-    image: redis:6-alpine
+    image: redis:7-alpine
     restart: always
     ports:
       - "6381:6379"

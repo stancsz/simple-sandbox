@@ -22,7 +22,7 @@ failoverController:
   enabled: true
   image:
     repository: curlimages/curl
-    tag: 8.6.0
+    tag: 8.12.1
     pullPolicy: IfNotPresent
   interval: 10
   timeout: 5
@@ -38,7 +38,7 @@ replicationSidecar:
   enabled: true
   image:
     repository: rclone/rclone
-    tag: 1.66
+    tag: 1.69.1
     pullPolicy: IfNotPresent
   syncInterval: 60
   resources:
@@ -131,7 +131,7 @@ redis:
   enabled: false
   image:
     repository: redis
-    tag: 7.0-alpine
+    tag: 7.4-alpine
     pullPolicy: IfNotPresent
   port: 6379
   resources: {}
