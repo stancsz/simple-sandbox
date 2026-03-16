@@ -25,7 +25,7 @@ jobs:
     - name: Install Helm
       uses: azure/setup-helm@v4
 
-    - run: npm ci
+    - run: npm ci --legacy-peer-deps
     - run: npm run build --if-present
     - run: npm test
 
@@ -44,6 +44,6 @@ jobs:
     - name: Install Helm
       uses: azure/setup-helm@v4
 
-    - run: npm ci
+    - run: npm ci --legacy-peer-deps
     - name: Run K8s Validation Tests
       run: npx vitest run tests/integration/k8s_production_validation.test.ts
