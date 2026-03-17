@@ -250,36 +250,56 @@ export class EpisodicMemory {
     const table = await this.getTable(company);
     if (!table) return [];
 
-    let search = table.search(embedding);
-    if (type) {
-        // Sanitize type to prevent SQL injection in where clause
-        const safeType = type.replace(/'/g, "''");
-        search = search.where(`type = '${safeType}'`);
+    try {
+        let search = table.search(embedding);
+        if (type) {
+            // Sanitize type to prevent SQL injection in where clause
+            const safeType = type.replace(/'/g, "''");
+            search = search.where(`type = '${safeType}'`);
+        }
+
+        const results = await search
+          .limit(limit)
+          .toArray();
+
+        const finalResults = results as unknown as PastEpisode[];
+
+        if (this.cache && cacheKey) {
+          this.cache.set(cacheKey, finalResults);
+        }
+
+        return finalResults;
+    } catch(e) {
+        if(String(e).includes("Not found")) {
+            const connector = await this.getConnector(company);
+            import("../mcp_servers/brain/lance_connector.js").then(({ lanceDBPool }) => {
+                lanceDBPool.invalidateTable(connector["dbPath"], this.defaultTableName);
+            });
+        }
+        return [];
     }
-
-    const results = await search
-      .limit(limit)
-      .toArray();
-
-    const finalResults = results as unknown as PastEpisode[];
-
-    if (this.cache && cacheKey) {
-      this.cache.set(cacheKey, finalResults);
-    }
-
-    return finalResults;
   }
 
   async getRecentEpisodes(company?: string, limit: number = 100): Promise<PastEpisode[]> {
     const table = await this.getTable(company);
     if (!table) return [];
 
-    const results = await table.query()
-        .limit(limit)
-        .toArray();
+    try {
+        const results = await table.query()
+            .limit(limit)
+            .toArray();
 
-    return (results as unknown as PastEpisode[])
-        .sort((a, b) => b.timestamp - a.timestamp);
+        return (results as unknown as PastEpisode[])
+            .sort((a, b) => b.timestamp - a.timestamp);
+    } catch(e) {
+        if(String(e).includes("Not found")) {
+            const connector = await this.getConnector(company);
+            import("../mcp_servers/brain/lance_connector.js").then(({ lanceDBPool }) => {
+                lanceDBPool.invalidateTable(connector["dbPath"], this.defaultTableName);
+            });
+        }
+        return [];
+    }
   }
 
   async storeLedgerEntry(entry: LedgerEntry, company?: string): Promise<void> {
@@ -307,7 +327,19 @@ export class EpisodicMemory {
             }
           }
         } else {
-          await table.add([dataWithVector as any]);
+          try {
+            await table.add([dataWithVector as any]);
+          } catch(e) {
+            // Check for Not Found, invalidate and recreate
+            if(String(e).includes("Not found")) {
+                import("../mcp_servers/brain/lance_connector.js").then(({ lanceDBPool }) => {
+                   lanceDBPool.invalidateTable(connector["dbPath"], this.ledgerTableName);
+                });
+                table = await connector.createTable(this.ledgerTableName, [dataWithVector as any]);
+            } else {
+                throw e;
+            }
+          }
         }
     });
 
@@ -319,11 +351,21 @@ export class EpisodicMemory {
 
   async getLedgerEntries(company?: string): Promise<LedgerEntry[]> {
     const connector = await this.getConnector(company);
-    const table = await connector.getTable(this.ledgerTableName);
+    let table = await connector.getTable(this.ledgerTableName);
     if (!table) return [];
 
-    const results = await table.query().toArray();
-    return (results as unknown as LedgerEntry[]).sort((a, b) => b.timestamp - a.timestamp);
+    try {
+        const results = await table.query().toArray();
+        return (results as unknown as LedgerEntry[]).sort((a, b) => b.timestamp - a.timestamp);
+    } catch(e) {
+        if(String(e).includes("Not found")) {
+            import("../mcp_servers/brain/lance_connector.js").then(({ lanceDBPool }) => {
+                lanceDBPool.invalidateTable(connector["dbPath"], this.ledgerTableName);
+            });
+            return [];
+        }
+        throw e;
+    }
   }
 
   async updateLedgerEntry(id: string, updates: Partial<LedgerEntry>, company?: string): Promise<void> {
@@ -332,17 +374,27 @@ export class EpisodicMemory {
     // We will do a read, modify, delete, insert.
     const connector = await this.getConnector(company);
     await connector.withLock(company, async () => {
-        const table = await connector.getTable(this.ledgerTableName);
+        let table = await connector.getTable(this.ledgerTableName);
         if (!table) return;
 
-        const results = await table.query().where(`id = '${id}'`).toArray();
-        if (results.length === 0) return;
+        try {
+            const results = await table.query().where(`id = '${id}'`).toArray();
+            if (results.length === 0) return;
 
-        const entry = results[0] as unknown as LedgerEntry & { vector: number[] };
-        const updatedEntry = { ...entry, ...updates };
+            const entry = results[0] as unknown as LedgerEntry & { vector: number[] };
+            const updatedEntry = { ...entry, ...updates };
 
-        await table.delete(`id = '${id}'`);
-        await table.add([updatedEntry as any]);
+            await table.delete(`id = '${id}'`);
+            await table.add([updatedEntry as any]);
+        } catch(e) {
+            if(String(e).includes("Not found")) {
+                import("../mcp_servers/brain/lance_connector.js").then(({ lanceDBPool }) => {
+                    lanceDBPool.invalidateTable(connector["dbPath"], this.ledgerTableName);
+                });
+            } else {
+                throw e;
+            }
+        }
     });
   }
 }
