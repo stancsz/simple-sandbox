@@ -4,7 +4,8 @@ import { join } from "path";
 import { mkdir, rm, writeFile, readFile } from "fs/promises";
 import { existsSync } from "fs";
 import { tmpdir } from "os";
-import { fetch } from "undici"; // vitest uses node, fetch available globally in node 18+, but undici is safer if not. actually fetch is global in node 22.
+// Use global node fetch
+// import { fetch } from "undici"; // vitest uses node, fetch available globally in node 18+, but undici is safer if not. actually fetch is global in node 22.
 
 // Helper to wait for a port to be ready
 async function waitForPort(port: number, timeout = 10000) {
