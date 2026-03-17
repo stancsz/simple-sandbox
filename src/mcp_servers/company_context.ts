@@ -8,10 +8,14 @@ import { readFile, readdir, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import { createLLM } from "../llm.js";
 import { update_company_with_ecosystem_insights } from "./company_context/tools/meta_learning_integration.js";
+import { LanceConnector } from "./brain/lance_connector.js";
+import { LRUCache } from "lru-cache";
+import { createHash } from "crypto";
 
 export class CompanyContextServer {
   private server: McpServer;
   private llm: ReturnType<typeof createLLM>;
+  private cache: LRUCache<string, any[]>;
 
   constructor() {
     this.server = new McpServer({
@@ -19,27 +23,20 @@ export class CompanyContextServer {
       version: "1.0.0",
     });
     this.llm = createLLM();
+
+    // Cache for frequent query results to improve multi-tenant lookup speed
+    this.cache = new LRUCache({
+        max: 500, // Max number of query results to cache
+        ttl: 1000 * 60 * 60, // 1 hour TTL
+    });
+
     this.setupTools();
   }
 
-  private async getDb(companyId: string) {
-    const dbPath = join(process.cwd(), ".agent", "companies", companyId, "brain");
-    if (!existsSync(dbPath)) {
-      await mkdir(dbPath, { recursive: true });
-    }
-    return await lancedb.connect(dbPath);
-  }
-
-  private async getTable(db: lancedb.Connection, tableName: string = "documents") {
-    try {
-      const names = await db.tableNames();
-      if (names.includes(tableName)) {
-        return await db.openTable(tableName);
-      }
-      return null;
-    } catch {
-      return null;
-    }
+  private getConnector(companyId: string): LanceConnector {
+    const baseDir = process.env.JULES_AGENT_DIR || join(process.cwd(), ".agent");
+    const dbPath = join(baseDir, "companies", companyId, "brain");
+    return new LanceConnector(dbPath);
   }
 
   private setupTools() {
@@ -67,8 +64,8 @@ export class CompanyContextServer {
         }
 
         const files = await readdir(docsDir);
-        const db = await this.getDb(company_id);
-        let table = await this.getTable(db);
+        const connector = this.getConnector(company_id);
+        let table = await connector.getTable("documents");
 
         // If table doesn't exist, we must create it with the first valid item
         // If it does exist, we add to it.
@@ -103,7 +100,7 @@ export class CompanyContextServer {
             };
 
             if (!table) {
-                table = await db.createTable("documents", [data]);
+                table = await connector.createTable("documents", [data]);
                 created = true;
             } else {
                 await table.add([data]);
@@ -112,6 +109,13 @@ export class CompanyContextServer {
           } catch (e) {
               console.error(`Error processing ${file}:`, e);
           }
+        }
+
+        // Clear cache for this company since we ingested new data
+        for (const key of this.cache.keys()) {
+            if (key.startsWith(`${company_id}_`)) {
+                this.cache.delete(key);
+            }
         }
 
         return {
@@ -143,10 +147,16 @@ export class CompanyContextServer {
              };
         }
 
-        const db = await this.getDb(targetCompany);
-        const table = await this.getTable(db);
-        if (!table) {
-          return { content: [{ type: "text", text: "No context found for this company (database empty)." }] };
+        // Cache lookup BEFORE embedding (saves network/compute roundtrip)
+        const hash = createHash("sha256").update(query).digest("hex");
+        const cacheKey = `${targetCompany}_${hash}`;
+        const cachedResults = this.cache.get(cacheKey);
+
+        if (cachedResults) {
+            const text = cachedResults.map((r: any) => `[Source: ${r.id}]\n${r.content}`).join("\n\n---\n\n");
+            return {
+                content: [{ type: "text", text: text || "No relevant documents found." }],
+            };
         }
 
         const embedding = await this.llm.embed(query);
@@ -154,8 +164,16 @@ export class CompanyContextServer {
             return { content: [{ type: "text", text: "Failed to generate embedding for query." }], isError: true };
         }
 
+        const connector = this.getConnector(targetCompany);
+        const table = await connector.getTable("documents");
+        if (!table) {
+          return { content: [{ type: "text", text: "No context found for this company (database empty)." }] };
+        }
+
         try {
             const results = await table.search(embedding).limit(3).toArray();
+            this.cache.set(cacheKey, results);
+
             const text = results.map((r: any) => `[Source: ${r.id}]\n${r.content}`).join("\n\n---\n\n");
 
             return {

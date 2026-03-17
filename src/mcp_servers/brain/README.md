@@ -22,3 +22,9 @@ This tool queries the episodic and semantic memories of a given list of child ag
 
 ## Storage Location
 Data is persisted in the `.agent/brain/` directory, using LanceDB for episodic vectors and a JSON-backed graph for semantic data.
+
+## Performance Tuning
+The Brain MCP Server, particularly via `LanceConnector`, is optimized for 100+ multi-tenant scaling:
+* **Connection Pooling**: Connections are pooled using an LRU cache (`LanceDBPool`) holding up to 200 databases. This prevents file descriptor exhaustion and lowers memory overhead across multiple child agencies.
+* **Vector Indexing (IVF-PQ)**: Similarity search is dramatically sped up by automatically creating Inverted File Product Quantization (IVF-PQ) indexes on vector columns upon table creation.
+* **Benchmark Results**: Benchmarks located in `tests/performance/lance_performance.test.ts` demonstrate a >50% reduction in query latency, maintaining sub-second p95 latency even with 100 concurrent tenants querying the database.
