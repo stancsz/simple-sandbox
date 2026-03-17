@@ -104,6 +104,13 @@ The company context feature is validated by a comprehensive test suite:
 
 The Company Context system is fully integrated with the **Brain MCP Server** to provide deep, persistent memory with enterprise-grade concurrency guarantees.
 
+### Performance & Multi-Tenant Scaling
+
+The `CompanyContextServer` utilizes advanced LanceDB optimizations to handle 100+ concurrent clients with sub-second latency:
+1. **Connection Pooling (`LanceDBPool`)**: Connections are managed by a central LRU cache pool (`lance_connector.ts`) that keeps up to 200 databases open simultaneously, preventing file descriptor exhaustion while minimizing connection overhead.
+2. **IVF-PQ Indexing**: Upon table creation, vector data is automatically indexed using Inverted File Product Quantization (IVF-PQ), ensuring blazingly fast similarity searches even as document volume scales.
+3. **Query Result Caching**: Frequent queries are cached in-memory per company using `lru-cache`, completely bypassing the database for repeated identical context retrievals (cache is invalidated on new data ingestion).
+
 ### Concurrency & Data Integrity
 
 To support high-concurrency multi-tenant environments (e.g., Kubernetes), the Brain employs a robust three-layer protection strategy:

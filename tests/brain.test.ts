@@ -3,20 +3,26 @@ import { EpisodicMemory } from '../src/brain/episodic.js';
 import * as lancedb from '@lancedb/lancedb';
 
 // Mock lancedb
-vi.mock('@lancedb/lancedb', () => ({
-  connect: vi.fn().mockResolvedValue({
-    tableNames: vi.fn().mockResolvedValue([]),
-    openTable: vi.fn().mockResolvedValue({
-      add: vi.fn(),
-      search: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockReturnThis(),
-      toArray: vi.fn().mockReturnValue([]),
+vi.mock('@lancedb/lancedb', () => {
+  return {
+    connect: vi.fn().mockResolvedValue({
+      tableNames: vi.fn().mockResolvedValue([]),
+      openTable: vi.fn().mockResolvedValue({
+        add: vi.fn(),
+        search: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        toArray: vi.fn().mockReturnValue([]),
+      }),
+      createTable: vi.fn().mockReturnValue({
+        add: vi.fn(),
+        createIndex: vi.fn().mockResolvedValue(undefined),
+      }),
     }),
-    createTable: vi.fn().mockReturnValue({
-      add: vi.fn(),
-    }),
-  }),
-}));
+    Index: {
+      ivfPq: vi.fn().mockReturnValue({ type: "ivfPq" })
+    }
+  };
+});
 
 // Mock LLM
 const mockLLM = {
