@@ -32,7 +32,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm ci
+          npm ci --legacy-peer-deps
 
       - name: Simple Code Review
         run: |
