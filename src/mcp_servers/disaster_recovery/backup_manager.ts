@@ -4,18 +4,18 @@ import { access, mkdir, rm, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { pipeline } from 'stream/promises';
 import { parse } from 'dotenv';
-import tar from 'tar';
+import * as tar from 'tar';
 import { getXeroClient, getTenantId } from '../business_ops/xero_tools.js';
 
 // Configuration
-const AGENT_DIR = process.env.JULES_AGENT_DIR || join(process.cwd(), '.agent');
-const BACKUP_DIR = join(AGENT_DIR, 'backups');
+const getAgentDir = () => process.env.JULES_AGENT_DIR || join(process.cwd(), '.agent');
+const getBackupDir = () => join(getAgentDir(), 'backups');
 const ALGORITHM = 'aes-256-gcm';
 
 // Directories to backup
-const BACKUP_TARGETS = [
-    join(AGENT_DIR, 'brain'),
-    join(AGENT_DIR, 'companies')
+const getBackupTargets = () => [
+    join(getAgentDir(), 'brain'),
+    join(getAgentDir(), 'companies')
 ];
 
 export interface BackupResult {
@@ -115,6 +115,8 @@ export async function createBackup(): Promise<BackupResult> {
     const startTime = Date.now();
     let tempTarPath = '';
     let stagingDir = '';
+    const BACKUP_DIR = getBackupDir();
+    const BACKUP_TARGETS = getBackupTargets();
 
     try {
         await ensureDir(BACKUP_DIR);
@@ -224,6 +226,7 @@ export async function createBackup(): Promise<BackupResult> {
 export async function restoreBackup(backupPath: string, expectedChecksum?: string): Promise<RestoreResult> {
     const startTime = Date.now();
     let tempTarPath = '';
+    const BACKUP_DIR = getBackupDir();
 
     try {
         const key = getEncryptionKey();

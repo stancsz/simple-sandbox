@@ -30,6 +30,7 @@ vi.mock('../../src/logger.js', () => ({
 
 describe('Disaster Recovery Manager', () => {
     const AGENT_DIR = join(process.cwd(), '.agent');
+    process.env.JULES_AGENT_DIR = AGENT_DIR;
     const BRAIN_DIR = join(AGENT_DIR, 'brain');
     const COMPANIES_DIR = join(AGENT_DIR, 'companies');
     const BACKUP_DIR = join(AGENT_DIR, 'backups');
@@ -67,6 +68,7 @@ describe('Disaster Recovery Manager', () => {
 
     it('should create an encrypted backup successfully', async () => {
         const result = await createBackup();
+        if (result.error) console.error("Create backup failed:", result.error);
 
         expect(result.success).toBe(true);
         expect(result.backupPath).toBeDefined();

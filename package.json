@@ -50,11 +50,16 @@
     "@ai-sdk/openai": "^3.0.25",
     "@anthropic-ai/sdk": "^0.74.0",
     "@browserbasehq/stagehand": "^3.0.8",
+    "@buape/carbon": "^0.14.0",
     "@clack/prompts": "^0.7.0",
+    "@discordjs/rest": "^2.6.0",
+    "@discordjs/ws": "^2.0.4",
     "@google/generative-ai": "^0.24.1",
+    "@hono/node-server": "^1.19.11",
     "@hubspot/api-client": "^13.4.0",
     "@kubernetes/client-node": "^1.4.0",
     "@lancedb/lancedb": "^0.26.2",
+    "@langchain/core": "^1.1.32",
     "@linear/sdk": "^76.0.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@oclif/core": "^4.0.0",
@@ -88,6 +93,7 @@
     "lru-cache": "^11.2.7",
     "node-cron": "^4.2.1",
     "node-fetch": "^2.7.0",
+    "node-llama-cpp": "^3.18.0",
     "openclaw": "^2026.2.9",
     "ora": "^8.0.0",
     "picocolors": "^1.0.0",
@@ -96,11 +102,31 @@
     "simple-git": "^3.22.0",
     "simple-statistics": "^7.8.9",
     "sqlite-vec": "^0.1.7-alpha.2",
+    "tar": "^7.5.11",
     "ts-morph": "^22.0.0",
     "turndown": "^7.2.0",
+    "undici": "^7.24.4",
     "xero-node": "^13.4.0",
     "yaml": "^2.8.2",
     "zod": "^3.25.76"
+  },
+  "overrides": {
+    "discord.js": {
+      "undici": "^6.23.1"
+    },
+    "openclaw": {
+      "@buape/carbon": {
+        "@hono/node-server": "^1.19.10"
+      }
+    },
+    "@buape/carbon": {
+      "@hono/node-server": "^1.19.10"
+    },
+    "@browserbasehq/stagehand": {
+      "@langchain/core": {
+        "langsmith": "^0.4.6"
+      }
+    }
   },
   "devDependencies": {
     "@oclif/test": "^4.0.0",
