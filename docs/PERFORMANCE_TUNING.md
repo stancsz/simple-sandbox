@@ -1,47 +1,49 @@
-# LanceDB Performance Tuning & Caching
+# Performance Tuning
 
-As the core brain of the autonomous agency, the `EpisodicMemory` instance facilitates context retrieval and continuous cross-agency insights across diverse swarms. With multiple high-concurrency swarms querying the brain continuously, querying `lancedb` operations for similar context structures becomes a measurable performance bottleneck.
+## LanceDB Vector Search Optimization
 
-## Profiling Methodology
-To profile the default performance capabilities of the system under high load, we implemented `scripts/profile_lancedb_performance.ts`.
+This document outlines the performance optimizations applied to `LanceConnector` to support multi-tenant, high-concurrency vector searches.
 
-**Scenario:**
-1. Populate `EpisodicMemory` with 100 synthetic memory records representing task histories.
-2. Simulate a concurrent load spike of 50 simultaneous `.recall()` query operations triggered via `Promise.all()`.
-3. Capture total latency, average latency per query, and peak memory delta across the Node.js process.
-4. Execute with isolated embeddings using `MOCK_EMBEDDINGS=true` to accurately isolate LanceDB table search impacts.
+### Problem
+As the system scaled to handle 100+ concurrent agency swarms, vector searches via `LanceConnector` became a bottleneck. The initial implementation:
+- Established a single `lancedb.Connection` globally but re-opened `lancedb.Table` instances on every query, which is extremely I/O intensive.
+- Lacked advanced indexing on the vector columns (IVF-PQ), leading to slow brute-force K-Nearest Neighbor searches.
+- Handled multi-tenant queries serially instead of batching them efficiently.
+- Blocked concurrent reads on the `SemanticGraph` using exclusive mutex locks.
 
-## Baseline vs. Optimized Metrics
-Prior to caching implementations, each `.recall()` call triggered individual `lancedb` table searches.
+### Solution
 
-**Baseline (Pre-Optimization)**
-- Total Latency (50 queries): ~1714 ms
-- Average Latency per Query: ~34.28 ms
-- Memory Usage Delta: ~8.14 MB
+#### 1. Connection and Table Pooling (`LRUCache`)
+We introduced `LanceDBPool` which wraps `lru-cache`. It now caches both `lancedb.Connection` and `lancedb.Table` instances:
+- **Connection Cache**: Keeps up to 200 concurrent databases open.
+- **Table Cache**: Keeps up to 500 table instances open across different tenant namespaces. By reusing these instances, we completely avoid the `db.openTable()` penalty during read-heavy workloads.
 
-**Optimized (LRU Caching Enabled)**
-- Total Latency (50 queries): ~989 ms
-- Average Latency per Query: ~19.78 ms
-- Memory Usage Delta: ~8.64 MB
+#### 2. Advanced Indexing (IVF-PQ & B-Tree)
+The `createVectorIndex` method in `LanceConnector` now dynamically calculates the number of partitions (`numPartitions`) based on the table's row count (or environment overrides), defaulting to standard IVF-PQ settings.
+- **IVF-PQ Index**: Speeds up similarity searches significantly.
+- **B-Tree Index**: Added B-tree indexing on metadata columns (like `id`) for accelerated filtering during hybrid searches.
 
-**Results:**
-The implementation of the in-memory LRU cache reduced the average query latency by roughly **42%**. Caching ensures that repetitive, overlapping multi-agent tasks querying the exact same embedded problem space do not redundantly invoke `lancedb` vector searches. Memory usage experienced a nominal ~0.5 MB overhead to maintain the active cache space.
+#### 3. Concurrent Query Batching (`batchQuery`)
+Added `batchQuery` to `LanceConnector` to allow the system to submit arrays of queries simultaneously, processing them via `Promise.all` while relying on the cached table instances.
 
-## Configuration Options
+#### 4. Semantic Graph Read Optimization
+Removed `mutex.runExclusive` for pure read operations (`query`, `getGraphData`) in `SemanticGraph`. Reads can now happen concurrently alongside background syncs, massively improving throughput for graph traversal.
 
-To configure the episodic memory caching layer, modify the `llmCache` object inside `mcp.json` or `.agent/config.json`. The `EpisodicMemory` cache shares the same core settings structure but functions exclusively in-memory for speed.
+---
 
-```json
-{
-  "llmCache": {
-    "enabled": true,
-    "ttl": 3600000
-  }
-}
+## Benchmarking
+
+A comprehensive multi-tenant performance test is available in `tests/performance/lancedb_scalability.test.ts`.
+
+It simulates:
+- 100 concurrent tenants.
+- 256 generated documents per tenant (to train IVF-PQ clusters).
+- 10 simultaneous queries per tenant using the new `batchQuery` functionality.
+
+### Running the Benchmark
+
+```bash
+npm run test:performance
 ```
 
-- **enabled**: Toggles the memory cache (`boolean`, defaults to `true`).
-- **ttl**: Sets the TTL (Time-To-Live) for cached `PastEpisode` arrays in milliseconds (`number`, defaults to `3600000` or 1 hour).
-- **max**: The cache currently maintains a hardcoded max limit of `500` entries to prevent unbounded memory growth. Cache keys are generated via SHA-256 hashes of the target embeddings.
-
-**Note:** Cache invalidation occurs automatically. Whenever a new episodic memory is logged (via `EpisodicMemory.store`), the entire query cache is cleared to ensure subsequent swarms have immediate access to the newly recorded insights.
+The output will measure Setup Time, Average Latency, P95/P99 latencies, and total Heap Memory usage to ensure the `LRUCache` isn't leaking references.

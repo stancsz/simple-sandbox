@@ -32,6 +32,46 @@ export class SemanticGraph {
     this.baseDir = baseDir;
   }
 
+  // Simple Read-Write Lock implementation using a Mutex for writers and a counter for readers
+  private rwLocks: Map<string, { readCount: number, writeLock: Mutex, readLock: Mutex }> = new Map();
+
+  private getRWLock(company: string = "default") {
+      if (!this.rwLocks.has(company)) {
+          this.rwLocks.set(company, {
+              readCount: 0,
+              writeLock: new Mutex(),
+              readLock: new Mutex()
+          });
+      }
+      return this.rwLocks.get(company)!;
+  }
+
+  private async acquireReadLock(company: string = "default"): Promise<() => void> {
+      const lock = this.getRWLock(company);
+      await lock.readLock.runExclusive(async () => {
+          lock.readCount++;
+          if (lock.readCount === 1) {
+              await lock.writeLock.acquire();
+          }
+      });
+      return async () => {
+          await lock.readLock.runExclusive(async () => {
+              lock.readCount--;
+              if (lock.readCount === 0) {
+                  lock.writeLock.release();
+              }
+          });
+      };
+  }
+
+  private async acquireWriteLock(company: string = "default"): Promise<() => void> {
+      const lock = this.getRWLock(company);
+      await lock.writeLock.acquire();
+      return () => {
+          lock.writeLock.release();
+      };
+  }
+
   private getMutex(company: string = "default"): Mutex {
       if (!this.mutexes.has(company)) {
           this.mutexes.set(company, new Mutex());
@@ -124,8 +164,8 @@ export class SemanticGraph {
   }
 
   async addNode(id: string, type: string, properties: Record<string, any> = {}, company?: string): Promise<void> {
-    const mutex = this.getMutex(company);
-    await mutex.runExclusive(async () => {
+    const release = await this.acquireWriteLock(company);
+    try {
         await this.withFileLock(company, async () => {
             const data = await this.load(company, true); // Force reload inside lock
             const existing = data.nodes.find((n) => n.id === id);
@@ -137,12 +177,14 @@ export class SemanticGraph {
             }
             await this.save(data, company);
         });
-    });
+    } finally {
+        release();
+    }
   }
 
   async addEdge(from: string, to: string, relation: string, properties: Record<string, any> = {}, company?: string): Promise<void> {
-    const mutex = this.getMutex(company);
-    await mutex.runExclusive(async () => {
+    const release = await this.acquireWriteLock(company);
+    try {
         await this.withFileLock(company, async () => {
             const data = await this.load(company, true); // Force reload inside lock
             // Check if edge exists
@@ -157,14 +199,16 @@ export class SemanticGraph {
             }
             await this.save(data, company);
         });
-    });
+    } finally {
+        release();
+    }
   }
 
   async query(query: string, company?: string): Promise<any> {
-      const mutex = this.getMutex(company);
-      return await mutex.runExclusive(async () => {
+      const release = await this.acquireReadLock(company);
+      try {
           // For query, we can use the cache or load without file lock for speed
-          // Assuming eventual consistency is acceptable for reads
+          // Allow concurrent reads without exclusive locking for better multi-tenant scaling
           const data = await this.load(company);
 
           const q = query.toLowerCase();
@@ -182,13 +226,17 @@ export class SemanticGraph {
           );
 
           return { nodes, edges };
-      });
+      } finally {
+          release();
+      }
   }
 
   async getGraphData(company?: string): Promise<GraphData> {
-    const mutex = this.getMutex(company);
-    return await mutex.runExclusive(async () => {
-        return this.load(company);
-    });
+      const release = await this.acquireReadLock(company);
+      try {
+          return await this.load(company);
+      } finally {
+          release();
+      }
   }
 }
