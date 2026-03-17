@@ -59,6 +59,11 @@ describe("CompanyContextServer", () => {
 
   afterEach(async () => {
     await rm(testRoot, { recursive: true, force: true });
+
+    // Clear global LanceDB cache to prevent stale table references across tests
+    const { lanceDBPool } = await import("../src/mcp_servers/brain/lance_connector.js");
+    lanceDBPool.clearAll();
+
     vi.restoreAllMocks();
   });
 

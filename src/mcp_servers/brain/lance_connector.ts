@@ -69,6 +69,15 @@ class LanceDBPool {
   setTable(dbPath: string, tableName: string, table: lancedb.Table) {
     this.tables.set(`${dbPath}:${tableName}`, Promise.resolve(table));
   }
+
+  clearTableCache(dbPath: string, tableName: string) {
+    this.tables.delete(`${dbPath}:${tableName}`);
+  }
+
+  clearAll() {
+    this.tables.clear();
+    this.connections.clear();
+  }
 }
 
 export const lanceDBPool = new LanceDBPool();
@@ -154,6 +163,11 @@ export class LanceConnector {
       return table;
   }
 
+  clearCache() {
+      // Allow tests to clear cache for this path when deleting files
+      lanceDBPool.clearAll();
+  }
+
   async batchQuery(tableName: string, queries: number[][], limit: number = 3): Promise<any[][]> {
       const table = await this.getTable(tableName);
       if (!table) return queries.map(() => []);
@@ -187,6 +201,12 @@ export class LanceConnector {
               }),
               replace: true
           });
+
+          // Index creation replaces the underlying data fragments. We must invalidate the cached table reference
+          // to force a fresh openTable() next time, preventing 'Failed to get next batch from stream' Rust errors.
+          if (table.name) {
+              lanceDBPool.clearTableCache(this.dbPath, table.name);
+          }
       } catch (e) {
           // It's possible the index creation fails if the index already exists or another reason.
           // We can safely ignore or log it.

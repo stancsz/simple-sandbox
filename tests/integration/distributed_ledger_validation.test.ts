@@ -30,6 +30,10 @@ describe("Distributed Ledger - Phase 31 Validation", () => {
         vi.restoreAllMocks();
         try {
             await rm(TEST_DB_PATH, { recursive: true, force: true });
+
+            // Clear global LanceDB cache to prevent stale table references across tests
+            const { lanceDBPool } = await import("../../src/mcp_servers/brain/lance_connector.js");
+            lanceDBPool.clearAll();
         } catch (e) {
             // Ignore cleanup errors
         }

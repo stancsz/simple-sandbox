@@ -47,45 +47,57 @@ describe("LanceDB Multi-Tenant Performance Benchmark", () => {
         if (!process.env.KEEP_TEST_DATA && existsSync(TEST_AGENT_DIR)) {
             await rm(TEST_AGENT_DIR, { recursive: true, force: true });
         }
+
+        // Clear global LanceDB cache
+        const { lanceDBPool } = await import("../../src/mcp_servers/brain/lance_connector.js");
+        lanceDBPool.clearAll();
     });
 
     it("should handle 100+ concurrent clients with sub-second query latency", async () => {
         console.log(`Setting up ${NUM_TENANTS} tenants with ${DOCS_PER_TENANT} documents each...`);
 
-        // Setup data
+        // Setup data with concurrent chunks to prevent timeout
+        const setupTasks = [];
         for (let i = 0; i < NUM_TENANTS; i++) {
-            const companyId = `perf-company-${i}`;
-            const dbPath = join(TEST_AGENT_DIR, "companies", companyId, "brain");
+            setupTasks.push(async () => {
+                const companyId = `perf-company-${i}`;
+                const dbPath = join(TEST_AGENT_DIR, "companies", companyId, "brain");
 
-            const connector = new LanceConnector(dbPath);
-            await connector.withLock("default", async () => {
-                const data = [];
-                for (let j = 0; j < DOCS_PER_TENANT; j++) {
-                    const content = `This is document ${j} for company ${i}. It contains some strategic context.`;
-                    // Generate dummy vector manually for setup speed.
-                    // Make it more variable to avoid "empty K-Means clusters" warnings from LanceDB IVF-PQ.
-                    const hash = content.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) + (j * 13);
-                    const vector = new Array(1536).fill(0).map((_, k) => ((hash * (k + 1 + j)) % 1000) / 1000);
+                const connector = new LanceConnector(dbPath);
+                await connector.withLock("default", async () => {
+                    const data = [];
+                    for (let j = 0; j < DOCS_PER_TENANT; j++) {
+                        const content = `This is document ${j} for company ${i}. It contains some strategic context.`;
+                        // Generate dummy vector manually for setup speed.
+                        // Make it more variable to avoid "empty K-Means clusters" warnings from LanceDB IVF-PQ.
+                        const hash = content.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) + (j * 13);
+                        const vector = new Array(1536).fill(0).map((_, k) => ((hash * (k + 1 + j)) % 1000) / 1000);
 
-                    data.push({
-                        id: `doc-${j}`,
-                        content,
-                        source: `file-${j}.txt`,
-                        vector
-                    });
-                }
-
-                try {
-                    // Use connector to trigger automatic index creation
-                    await connector.createTable("documents", data);
-                } catch (e) {
-                    const table = await connector.getTable("documents");
-                    if (table) {
-                        await table.add(data);
-                        await connector.optimizeTable("documents");
+                        data.push({
+                            id: `doc-${j}`,
+                            content,
+                            source: `file-${j}.txt`,
+                            vector
+                        });
                     }
-                }
+
+                    try {
+                        // Use connector to trigger automatic index creation
+                        await connector.createTable("documents", data);
+                    } catch (e) {
+                        const table = await connector.getTable("documents");
+                        if (table) {
+                            await table.add(data);
+                            await connector.optimizeTable("documents");
+                        }
+                    }
+                });
             });
+        }
+
+        // Execute setups in chunks of 20 to speed up and avoid EMFILE
+        for (let i = 0; i < setupTasks.length; i += 20) {
+             await Promise.all(setupTasks.slice(i, i + 20).map(task => task()));
         }
 
         console.log("Setup complete. Starting concurrent queries benchmark...");

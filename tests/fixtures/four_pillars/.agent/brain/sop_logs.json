@@ -1,27 +1,20 @@
 [
   {
-    "timestamp": "2026-03-17T05:29:09.602Z",
-    "sop": "Title: Deployment SOP",
-    "step": 3,
-    "status": "success",
-    "details": "Committed"
-  },
-  {
-    "timestamp": "2026-03-17T05:29:09.638Z",
+    "timestamp": "2026-03-17T12:12:24.414Z",
     "sop": "Title: Deployment SOP",
     "step": 1,
     "status": "success",
     "details": "Repository is clean."
   },
   {
-    "timestamp": "2026-03-17T05:29:09.640Z",
+    "timestamp": "2026-03-17T12:12:24.416Z",
     "sop": "Title: Deployment SOP",
     "step": 2,
     "status": "success",
     "details": "Updated version.txt to v1.0.1"
   },
   {
-    "timestamp": "2026-03-17T05:29:09.642Z",
+    "timestamp": "2026-03-17T12:12:24.418Z",
     "sop": "Title: Deployment SOP",
     "step": 3,
     "status": "success",
