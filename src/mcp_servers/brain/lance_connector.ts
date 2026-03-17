@@ -38,6 +38,14 @@ class LanceDBPool {
   }
 
   async getTable(dbPath: string, tableName: string): Promise<lancedb.Table | null> {
+    // Check if the actual table directory exists to prevent stale cache hits
+    // after test suites or external processes wipe the db path.
+    const tablePath = join(dbPath, `${tableName}.lance`);
+    if (!existsSync(tablePath)) {
+        this.invalidateTable(dbPath, tableName);
+        return null;
+    }
+
     const tableKey = `${dbPath}:${tableName}`;
     if (!this.tables.has(tableKey)) {
       const tablePromise = (async () => {
@@ -60,6 +68,11 @@ class LanceDBPool {
   invalidateTable(dbPath: string, tableName: string): void {
     const tableKey = `${dbPath}:${tableName}`;
     this.tables.delete(tableKey);
+  }
+
+  clearCache(): void {
+    this.tables.clear();
+    this.connections.clear();
   }
 }
 
