@@ -176,7 +176,7 @@ class JulesClient {
       }
 
       console.error(`[JulesClient] Creating session for task: "${task}"...`);
-      const session = await this.createSession(source.name, prompt, branch);
+      const session: any = await this.createSession(source.name, prompt, branch);
       console.error(`[JulesClient] Session created: ${session.name}`);
 
       console.error(`[JulesClient] Polling for Pull Request (timeout 5m)...`);

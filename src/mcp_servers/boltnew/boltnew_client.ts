@@ -104,7 +104,7 @@ export class BoltNewClient {
         );
         }
 
-        return await response.json();
+        return await response.json() as BoltNewFrameworksResult;
     } catch (error: any) {
          console.warn(`[BoltNewClient] API call failed (${error.message}). Falling back to defaults.`);
          return { frameworks: ["react", "vue", "svelte", "html"] };
