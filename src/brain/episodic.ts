@@ -67,6 +67,25 @@ export class EpisodicMemory {
 
     // Initialize default connector
     await this.getConnector();
+
+    // Migration: Perform asynchronous index creation on startup for existing data to ensure backward compatibility
+    this.createIndicesAsync().catch(err => {
+      console.error("[EpisodicMemory] Failed to migrate/create indices asynchronously:", err);
+    });
+  }
+
+  private async createIndicesAsync(): Promise<void> {
+    // In a multi-tenant setup we might need to iterate through all company directories.
+    // For now we will just attempt to optimize/index the default table.
+    try {
+      const connector = await this.getConnector();
+      const table = await connector.getTable(this.defaultTableName);
+      if (table) {
+        await connector.createVectorIndex(table);
+      }
+    } catch (e) {
+       // Ignore errors during async background migration
+    }
   }
 
   private async getConnector(company?: string): Promise<LanceConnector> {
