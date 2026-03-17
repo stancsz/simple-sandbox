@@ -176,6 +176,10 @@ describe("Kubernetes Production Validation (Simulated)", () => {
         }
       })
     });
+    if (!resB.ok) {
+        console.error(`[Test] Failed to store task-b: ${resB.status} ${resB.statusText}`);
+        console.error(`[Test] Response: ${await resB.text()}`);
+    }
     expect(resB.ok).toBe(true);
 
     await new Promise(r => setTimeout(r, 1000)); // Wait for persistence
