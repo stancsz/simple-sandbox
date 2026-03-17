@@ -5,6 +5,7 @@ import { mkdir, writeFile, rm } from "fs/promises";
 import { Engine, Registry, Context } from "../src/engine/orchestrator.js";
 import { MCP } from "../src/mcp.js";
 import { createLLM } from "../src/llm.js";
+import { lanceDBPool } from "../src/mcp_servers/brain/lance_connector.js";
 
 // Mock LLM
 vi.mock("../src/llm.js", () => {
@@ -58,6 +59,7 @@ describe("CompanyContextServer", () => {
   });
 
   afterEach(async () => {
+    lanceDBPool.clear(); // Important: clear global connection pool across tests
     await rm(testRoot, { recursive: true, force: true });
     vi.restoreAllMocks();
   });

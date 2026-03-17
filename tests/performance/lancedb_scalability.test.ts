@@ -3,7 +3,7 @@ import { join } from "path";
 import { mkdir, rm } from "fs/promises";
 import { existsSync } from "fs";
 import { CompanyContextServer } from "../../src/mcp_servers/company_context.js";
-import { LanceConnector } from "../../src/mcp_servers/brain/lance_connector.js";
+import { LanceConnector, lanceDBPool } from "../../src/mcp_servers/brain/lance_connector.js";
 import * as lancedb from "@lancedb/lancedb";
 
 // Mock LLM explicitly since we are hitting CompanyContext API that depends on it
@@ -44,6 +44,7 @@ describe("LanceDB Multi-Tenant Performance Benchmark", () => {
     });
 
     afterAll(async () => {
+        lanceDBPool.clear();
         if (!process.env.KEEP_TEST_DATA && existsSync(TEST_AGENT_DIR)) {
             await rm(TEST_AGENT_DIR, { recursive: true, force: true });
         }

@@ -4,6 +4,7 @@ import { recordTransaction, getAgencyBalance, proposeSettlement } from "../../sr
 import { rm } from "fs/promises";
 import { join } from "path";
 import * as strategyTools from "../../src/mcp_servers/brain/tools/strategy.js";
+import { lanceDBPool } from "../../src/mcp_servers/brain/lance_connector.js";
 
 const TEST_DB_PATH = join(process.cwd(), ".agent", "test_brain_ledger");
 
@@ -28,6 +29,7 @@ describe("Distributed Ledger - Phase 31 Validation", () => {
 
     afterEach(async () => {
         vi.restoreAllMocks();
+        lanceDBPool.clear(); // Important: clear global connection pool across tests
         try {
             await rm(TEST_DB_PATH, { recursive: true, force: true });
         } catch (e) {

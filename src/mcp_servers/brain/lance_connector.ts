@@ -79,6 +79,11 @@ class LanceDBPool {
   invalidateTable(dbPath: string, tableName: string) {
     this.tables.delete(`${dbPath}::${tableName}`);
   }
+
+  clear() {
+    this.connections.clear();
+    this.tables.clear();
+  }
 }
 
 export const lanceDBPool = new LanceDBPool();
