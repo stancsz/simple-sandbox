@@ -52,7 +52,11 @@ const {
 
 vi.mock('@linear/sdk', () => {
     return {
-        LinearClient: vi.fn(() => mockLinearClientInstance)
+        LinearClient: class {
+            constructor() {
+                return mockLinearClientInstance;
+            }
+        }
     };
 });
 
@@ -182,13 +186,18 @@ describe('Swarm Fleet Management Integration', () => {
         });
 
         // Mock Xero Contacts to match names
-        mockXeroClientInstance.accountingApi.getContacts.mockImplementation(async (tid, date, where) => {
-            if (where.includes("Client A")) return { body: { contacts: [{ contactID: "cid_A" }] } };
-            if (where.includes("Client B")) return { body: { contacts: [{ contactID: "cid_B" }] } };
+        mockXeroClientInstance.accountingApi.getContacts.mockImplementation(async (tid: any, date: any, where: string) => {
+            if (where && where.includes("Client A")) return { body: { contacts: [{ contactID: "cid_A" }] } };
+            if (where && where.includes("Client B")) return { body: { contacts: [{ contactID: "cid_B" }] } };
             return { body: { contacts: [] } };
         });
 
         const result = await tool({ profitability_weight: 0.5, demand_threshold: 5 });
+
+        // Handle potential error string instead of JSON
+        if (result.isError) {
+             throw new Error(result.content[0].text);
+        }
         const data = JSON.parse(result.content[0].text);
 
         const recA = data.recommendations.find((r: any) => r.company === "Client A");

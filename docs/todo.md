@@ -294,7 +294,9 @@
 **Goal:** Ongoing system health, capability tuning, and technical debt resolution for the Digital Biosphere.
 
 ### Maintenance Actions
-- [ ] **Dependency Audits**: Update Node packages, fix security vulnerabilities, and upgrade major frameworks (e.g., Vite, Vue).
+- [x] **Dependency Audits**: Update Node packages, fix security vulnerabilities, and upgrade major frameworks (e.g., Vite, Vue).
+  - ✅ Completed on 2026-03-26 by Jules. Updated Node packages, resolved 5 critical CVEs. Full report: `docs/maintenance/dependency_audit_2026-03-26.md`.
+  - [ ] **Follow-up:** Monitor upstream releases for `discord.js` and `@langchain/core` for patches resolving remaining transitive vulnerabilities (`undici`, `langsmith`).
 - [ ] **Performance Tuning**: Profile vector search operations in LanceDB for multi-tenant scalability optimizations.
 - [ ] **Bug Fixes**: Resolve minor issues in UI dashboard and fix edge cases in multi-region Kubernetes deployments.
 - [ ] **Code Refactoring**: Remove deprecated files and consolidate duplicated logic in MCP server utilities.

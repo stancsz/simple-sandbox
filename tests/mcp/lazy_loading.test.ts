@@ -4,8 +4,26 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 // Mock the SDK modules
-vi.mock("@modelcontextprotocol/sdk/client/index.js");
-vi.mock("@modelcontextprotocol/sdk/client/stdio.js");
+vi.mock("@modelcontextprotocol/sdk/client/index.js", () => {
+    return {
+        Client: vi.fn().mockImplementation(() => {
+            return {
+                connect: vi.fn().mockResolvedValue(undefined),
+                listTools: vi.fn().mockResolvedValue({ tools: [{ name: "mock_tool", description: "mock" }] }),
+                callTool: vi.fn().mockResolvedValue({ content: [{ text: "success" }] }),
+                close: vi.fn().mockResolvedValue(undefined)
+            };
+        })
+    };
+});
+
+vi.mock("@modelcontextprotocol/sdk/client/stdio.js", () => {
+    return {
+        StdioClientTransport: vi.fn().mockImplementation(() => {
+            return {};
+        })
+    };
+});
 
 describe("MCP Lazy Loading", () => {
     let mcp: MCP;
@@ -13,18 +31,6 @@ describe("MCP Lazy Loading", () => {
     beforeEach(() => {
         vi.resetAllMocks();
         mcp = new MCP();
-
-        // Mock Client constructor and methods
-        (Client as any).mockImplementation(() => ({
-            connect: vi.fn().mockResolvedValue(undefined),
-            listTools: vi.fn().mockResolvedValue({ tools: [{ name: "mock_tool", description: "mock" }] }),
-            callTool: vi.fn().mockResolvedValue({ content: [{ text: "success" }] })
-        }));
-
-        // Mock StdioClientTransport
-        (StdioClientTransport as any).mockImplementation(() => ({
-            // methods...
-        }));
     });
 
     it("should initialize without connecting to servers", async () => {
