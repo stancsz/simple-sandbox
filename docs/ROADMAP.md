@@ -326,6 +326,7 @@ The roadmap is structured around the four anatomical layers of the Digital Biosp
 *Status: Active*
 *Current Focus: Optimization, technical debt reduction, and refining core components.*
 - [x] **Performance Tuning**: LanceDB vector search optimized for 100+ tenants via connection pooling and IVF-PQ indexing, reducing average query latency by >50%. ✅ Validated via `tests/performance/lance_performance.test.ts` on current date.
+- [x] **Dependency Audits**: Performed comprehensive dependency audit, resolved root package vulnerabilities (e.g., @hono/node-server, langsmith) via package overrides, and updated Vue/Vite to v8 in the dashboard. Resolved all 28 identified vulnerabilities. ✅ Validated via `npm test` and `npm audit` on March 17, 2026.
 
 ## Phase 31: Autonomous Multi-Agency Federation & Collective Intelligence
 *Status: Completed*

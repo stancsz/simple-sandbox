@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2026-03-17
+
+### Fixed
+- **Dependency Vulnerabilities**: Conducted a full dependency audit and updated packages across the ecosystem to resolve critical and high-severity CVEs.
+    - Added `overrides` in `package.json` for nested dependencies `@hono/node-server` and `langsmith`.
+    - Upgraded `vite` to v8 and `vue` to v3.5+ within the `scripts/dashboard` client.
+
 ## [1.0.0] - 2025-01-26
 
 ### Validated
