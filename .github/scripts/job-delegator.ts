@@ -1,128 +1,110 @@
 import "dotenv/config";
-import fs from "fs";
-import path from "path";
+import * as fs from "fs";
+import * as path from "path";
 import { execSync } from "child_process";
-import { createLLM } from "../../src/llm.js";
-import { JulesClient } from "./jules-utils.js";
+import { createLLM } from "./deepseek.js";
+import { JulesClient } from "./jules.js";
 import chalk from "chalk";
 
 async function main() {
-    console.log(chalk.blue.bold("🤖 Smart Job Delegator: Initializing..."));
+    console.log(chalk.blue.bold("SimpleClaw Smart Job Delegator: Initializing..."));
 
-    const roadmapPath = path.resolve(process.cwd(), "docs/ROADMAP.md");
-    const specsPath = path.resolve(process.cwd(), "docs/specs.md");
-    const todoPath = path.resolve(process.cwd(), "docs/todo.md");
+    console.log(chalk.cyan("Fetching latest state from development..."));
+    execSync("git fetch origin development");
+    const claudeMd = execSync("git show origin/development:CLAUDE.md", { encoding: "utf-8" });
+    const specMd = execSync("git show origin/development:SPEC.md", { encoding: "utf-8" });
+    const swarmSpec = execSync("git show origin/development:SWARM_SPEC.md", { encoding: "utf-8" });
 
-    const roadmap = fs.existsSync(roadmapPath) ? fs.readFileSync(roadmapPath, "utf-8") : "";
-    const specs = fs.existsSync(specsPath) ? fs.readFileSync(specsPath, "utf-8") : "";
-    const todo = fs.existsSync(todoPath) ? fs.readFileSync(todoPath, "utf-8") : "";
-
-    console.log(chalk.cyan("🔍 Fetching open Pull Requests..."));
+    console.log(chalk.cyan("Fetching open Pull Requests..."));
     let prsJson = "";
     try {
         prsJson = execSync("gh pr list --json number,title,author,headRefName --state open", { encoding: "utf-8" });
     } catch (e) {
-        console.warn(chalk.yellow("⚠️ Failed to fetch PRs using gh CLI. Proceeding without PR context."));
+        console.warn(chalk.yellow("Failed to fetch PRs using gh CLI. Proceeding without PR context."));
     }
     const prs = prsJson ? JSON.parse(prsJson) : [];
 
-    // Ensure we use the correct model format if provided in env
-    const modelStr = process.env.MODEL || "deepseek:deepseek-reasoner";
-    console.log(chalk.gray(`[Config] Using model string: ${modelStr}`));
-    const llm = createLLM(modelStr);
-    console.log(chalk.gray(`[Env Check] DEEPSEEK_API_KEY: ${process.env.DEEPSEEK_API_KEY ? "Present" : "Missing"}`));
-    console.log(chalk.gray(`[Env Check] ANTHROPIC_API_KEY: ${process.env.ANTHROPIC_API_KEY ? "Present" : "Missing"}`));
+    const llm = createLLM();
+    const model = process.env.MODEL || "deepseek-reasoner";
+    console.log(chalk.gray(`[Config] Using model: ${model}`));
 
-    const systemPrompt = `You are the "Principal Architect & Manager" for the Simple CLI project.
-Your mission is to orchestrate the evolution of the project from a CLI tool into a true "Digital Agency" of autonomous coworkers.
+    const systemPrompt = `You are the "Principal Orchestrator" for the SimpleClaw project.
+Your mission is to guide the evolution of SimpleClaw into a world-class meta-orchestrator.
 
-### STRATEGIC CONTEXT:
-1. **ROADMAP**:
-${roadmap}
+### PROJECT CONTEXT:
+1. **MISSION & ARCHITECTURE (CLAUDE.md)**:
+${claudeMd}
 
-2. **TECHNICAL SPECS**:
-${specs}
+2. **ENGINEERING SUMMARY (SPEC.md)**:
+${specMd}
 
-3. **CURRENT PROGRESS (TODOs)**:
-${todo}
+3. **DETAILED SPECIFICATION (SWARM_SPEC.md)**:
+${swarmSpec}
 
 4. **ACTIVE WORK (Open PRs)**:
 ${JSON.stringify(prs)}
 
 ### YOUR OBJECTIVE:
-Analyze the roadmap against current progress and identify the absolute NEXT step required to achieve the "4-Pillar Vision" (Company Context, SOP-as-Code, Ghost Mode, Recursive Optimization).
-As a manager, you are also responsible for maintaining project hygiene: 
-1. Ensure the assigned task includes instructions to cross off completed items in 'docs/todo.md' or 'docs/ROADMAP.md', and add progress notes to the relevant documentation.
-2. **STRICT TEST POLICY**: Every delegated task MUST result in a PR with passing, comprehensive, and meaningful tests. You MUST instruct Jules to attach the test results (output) to the PR description or as a comment. Warn Jules that PRs without meaningful tests or attached results will be REJECTED.
+Analyze the current state of the project and identify the absolute NEXT meaningful step.
+Delegated work MUST be meaningful and advance the project towards the "Beautiful Swarms" vision.
 
 ### RULES:
-1. **DEEP DOCUMENTATION AUDIT**: You MUST read the Roadmap and Specs first. Understand "Phase 5" and the "4 Pillars".
-2. **NO DUPLICATION**: Check open PRs. If a task is mentioned in a PR title or description, skip it or find an independent sub-task.
-3. **HIGH-DETAIL DELEGATION**: Jules is a senior AI engineer but performs best with high-context instructions. Your task descriptions should include:
+1. **CLAUDE.md AUDIT**: Read the "BACKLOG" and "CURRENT TASK" sections in CLAUDE.md first.
+2. **NO DUPLICATION**: Do not delegate tasks that are already being worked on in open PRs.
+3. **HIGH-DETAIL DELEGATION**: Your instructions for the sub-agent ("Jules") should be crystal clear.
     - **Goal**: What exactly should be achieved.
-    - **Files to touch/create**: Suggest paths based on the project structure.
-    - **Logic**: Briefly explain the architectural approach (e.g., "Implement as an MCP server in src/mcp_servers/...").
-    - **Documentation**: Explicitly instruct Jules to update 'docs/todo.md', 'docs/ROADMAP.md', or other specs to reflect progress (crossing off items, adding context).
-    - **Testing**: Instruct Jules to write comprehensive tests and ATTACH the test results to the PR. Emphasize that passing tests and visible results are MANDATORY for acceptance.
-    - **Constraints**: Mention existing patterns (e.g., "Use the LLM class from src/llm.ts").
-4. **INDEPENDENCE**: Suggest the single most important next step. Limit your response to EXACTLY 1 high-priority task per run.
+    - **Files to touch**: Specific paths based on the structure.
+    - **CLAUDE.md Update**: Explicitly instruct Jules to read CLAUDE.md, pick up the task, and update the "AGENT WORKSPACE" and "BACKLOG" sections after completion.
+5. **OFF-LIMITS**: The '.github' directory is STRICTLY OFF-LIMITS. Never delegate tasks that require modifying CI/CD workflows or scripts.
+4. **FORMAT**: Output EXACTLY 1 task in JSON format.
 
 ### OUTPUT FORMAT (JSON ONLY):
 {
-  "thought": "A detailed analysis of what is missing based on the roadmap vs current state.",
-  "tasks": [
-    {
-      "description": "A comprehensive, 2-3 paragraph instruction for Jules, including specific file paths, technical requirements, documentation update instructions, and strict testing/reporting mandates.",
-      "priority": "high"
-    }
-  ],
+  "thought": "A detailed reasoning about why this task is the priority.",
+  "task": {
+    "description": "Comprehensive instructions for Jules. Start with: 'Jules, your task is...'",
+    "priority": "high"
+  },
   "should_delegate": true
 }`;
 
-    console.log(chalk.cyan("🧠 Reasoning about the next steps using " + modelStr + "..."));
-    const response = await llm.generate(systemPrompt, [{ role: "user", content: "What are the next tasks we should work on?" }]);
+    console.log(chalk.cyan("Reasoning about the next steps..."));
+    const response = await llm.generate(systemPrompt, "What is the absolute next task we should delegate to Jules?");
 
     let decision;
     try {
-        const jsonMatch = response.raw.match(/\{[\s\S]*\}/);
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error("No JSON block found in LLM response");
-
-        const cleanJson = jsonMatch[0];
-        try {
-            decision = JSON.parse(cleanJson);
-        } catch {
-            const { jsonrepair } = await import("jsonrepair");
-            decision = JSON.parse(jsonrepair(cleanJson));
-        }
+        decision = JSON.parse(jsonMatch[0]);
     } catch (e: any) {
-        console.error(chalk.red("❌ Failed to parse LLM decision:"), e.message);
-        console.log(chalk.gray("Raw Output:"), response.raw);
+        console.error(chalk.red("Failed to parse LLM decision:"), e.message);
+        console.log(chalk.gray("Raw Output:"), response);
         process.exit(1);
     }
 
     console.log(chalk.green.bold("\n--- Decision ---"));
     console.log(chalk.white("Rationale:"), decision.thought);
 
-    if (decision.should_delegate && decision.tasks && decision.tasks.length > 0) {
+    if (decision.should_delegate && decision.task) {
+        console.log(chalk.white("\nNext Task:"), chalk.yellow(decision.task.description));
+
+        // Delegation via Jules
+        console.log(chalk.cyan("Delegating to Jules via API..."));
+
         const jules = new JulesClient();
+        const instruction = `${decision.task.description}\n\nIMPORTANT: Read CLAUDE.md first. Update the AGENT WORKSPACE with your progress and mark tasks as done in the BACKLOG if applicable. Provide a clear summary of your work for the reviewer.`;
 
-        // Limit to 1 task per run to avoid overwhelming the system
-        const tasksToDelegate = decision.tasks.slice(0, 1);
+        const result = await jules.delegateTask(instruction);
 
-        for (const taskObj of tasksToDelegate) {
-            console.log(chalk.white("\nNext Task:"), chalk.yellow(taskObj.description));
-            console.log(chalk.cyan("📤 Delegating to Jules..."));
-
-            const result = await jules.delegateTask(taskObj.description);
-
-            if (result.success) {
-                console.log(chalk.green.bold("✅ Success:"), result.message);
-            } else {
-                console.error(chalk.red("❌ Failed:"), result.message);
-            }
+        if (result.success) {
+            console.log(chalk.green.bold("Success:"), result.message);
+            process.exit(0); // Exit immediately after delegation
+        } else {
+            console.error(chalk.red("Jules delegation failed:"), result.message);
+            process.exit(1);
         }
     } else {
-        console.log(chalk.yellow("⏸️ Decision: No new tasks to delegate at this time."));
+        console.log(chalk.yellow("Decision: No new tasks to delegate at this time."));
     }
 }
 
