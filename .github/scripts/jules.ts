@@ -1,4 +1,3 @@
-import fetch from "node-fetch";
 import { exec } from "child_process";
 import { promisify } from "util";
 
@@ -51,7 +50,6 @@ export class JulesClient {
                     owner = path[0];
                     repo = path[1];
                 } else {
-                    // Handle git@github.com:owner/repo.git
                     const path = parts[1].split("/");
                     owner = path[0];
                     repo = path[1];
@@ -61,11 +59,11 @@ export class JulesClient {
             const { stdout: branch } = await execAsync("git rev-parse --abbrev-ref HEAD");
             return {
                 owner: owner || "stancsz",
-                repo: repo || "simple-cli",
+                repo: repo || "simple-claw",
                 branch: branch.trim() || "main"
             };
         } catch (e) {
-            return { owner: "stancsz", repo: "simple-cli", branch: "main" };
+            return { owner: "stancsz", repo: "simple-claw", branch: "main" };
         }
     }
 
@@ -137,7 +135,7 @@ export class JulesClient {
             const { owner, repo, branch } = await this.getRepoInfo();
             const sources = await this.listSources();
             const source = sources.find(
-                (s) => s.githubRepo.owner === owner && s.githubRepo.repo === repo,
+                (s) => s.githubRepo.owner === owner && (s.githubRepo.repo === repo || s.githubRepo.repo === "simple-claw"),
             );
 
             if (!source) {
